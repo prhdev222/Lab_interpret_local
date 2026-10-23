@@ -121,7 +121,7 @@ def make_handler(db: DB, quiet: bool = True):
         def _post(self):
             path = self.path.split("?")[0]
             routes = {"/api/login": self.login, "/api/logout": self.logout, "/api/me": self.me, "/api/generate": self.generate,
-                      "/api/admin/users": self.admin_users, "/api/admin/stats": self.admin_stats, "/api/admin/rules": self.admin_rules, "/api/admin/targets": self.admin_targets, "/api/admin/golden": self.admin_golden, "/api/learn": self.learn_example, "/api/admin/signoff": self.admin_signoff, "/api/admin/learning": self.admin_learning}
+                      "/api/admin/users": self.admin_users, "/api/admin/stats": self.admin_stats, "/api/admin/rules": self.admin_rules, "/api/admin/targets": self.admin_targets, "/api/admin/golden": self.admin_golden, "/api/learn": self.learn_example, "/api/admin/learning": self.admin_learning}
             fn = routes.get(path)
             if fn is None:
                 return self.err(404, "ไม่พบ API นี้")
@@ -200,27 +200,6 @@ def make_handler(db: DB, quiet: bool = True):
                 return self.js({"rows": [self._describe_row(r) for r in rows], "count": len(rows)})
             return self.js({"success": True, "stored": learning_log.add_rows(rows)})
 
-        def admin_signoff(self, d):
-            """Sign-off of the reviewed rules (admin). The status falls back to DRAFT by itself if anything reviewed is edited later."""
-            u = self._admin()
-            if not u:
-                return
-            from engine import signoff
-            action = d.get("action")
-            if action == "status":
-                c = signoff.checklist()
-                return self.js({"state": signoff.state(), "status": signoff.effective_status(), "blockers": signoff.blockers(c), "examples": c["examples"],
-                                "history": signoff.history(), "phrase": signoff.PHRASE})
-            if action == "sign":
-                ok, errors = signoff.sign(d.get("name"), d.get("phrase"))
-                if ok:
-                    import subprocess
-                    subprocess.run([sys.executable, os.path.join(ROOT, "tools", "dump_rules.py")], cwd=ROOT, capture_output=True, timeout=60)
-                return self.js({"success": ok, "errors": errors})
-            if action == "revoke":
-                signoff.revoke(str(u.get("displayName") or u.get("username") or "")); return self.js({"success": True})
-            self.err(400, "action ไม่ถูกต้อง")
-
         def admin_learning(self, d):
             if not self._admin():
                 return
@@ -275,7 +254,8 @@ def make_handler(db: DB, quiet: bool = True):
                         except Exception: r["_describe"] = "(อ่านเงื่อนไขไม่ได้ แก้ในไฟล์)"
                 params = [{"name": n, "unit": sp.get("unit", ""), "kind": sp.get("kind", "number")} for n, sp in lex.params.items() if sp.get("kind") != "range"]
                 concepts = [{"id": "smoking", "label": "การสูบบุหรี่"}] + [{"id": k, "label": v["label"]} for k, v in lex.concepts.items()]
-                builtin = [{"id": r["id"], "problem": r["problem"], "text": r["describe"](t)} for r in RULES]
+                from engine import targets_edit as _te
+                builtin = [{"id": r["id"], "problem": r["problem"], "text": r["describe"](t), "groups": _te.groups_read_by(r["describe"], t, r["id"])} for r in RULES]
                 return self.js({"data": data, "errors": errors, "builtin": builtin, "params": params, "concepts": concepts,
                                 "problems": sorted(set(lex.problem_alias.values())), "limits": {"rules": custom_rules.MAX_RULES}})
             draft = d.get("data")

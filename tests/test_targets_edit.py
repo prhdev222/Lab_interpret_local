@@ -84,3 +84,35 @@ class Effect(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class RuleToNumbers(unittest.TestCase):
+    """The "แก้เกณฑ์" button on each standard rule must lead to every number the rule really uses."""
+    def test_reported_groups_cover_what_every_rule_actually_reads(self):
+        from engine.rules import RULES, Ctx, _clean_patient
+        from tests.test_render import battery
+        t = load_targets()
+        reported = {r["id"]: set(te.groups_read_by(r["describe"], t, r["id"])) for r in RULES}
+        missing = {}
+        for note in battery():
+            parsed = parse_note(note)
+            for patient in ({"age": 60, "sex": "M", "tcvr": 15}, {"age": 30, "sex": "F"}):
+                for r in RULES:
+                    seen = set()
+                    try:
+                        r["fn"](Ctx(parse_note(note), _clean_patient(patient), te._Rec(t, [], seen)))
+                    except Exception:
+                        continue
+                    used = {p.rsplit(".", 1)[0] for p in seen if "." in p}
+                    gap = used - reported[r["id"]]
+                    if gap:
+                        missing.setdefault(r["id"], set()).update(gap)
+        self.assertEqual(missing, {}, "add these to te.EXTRA_GROUPS")
+
+    def test_every_reported_group_exists_and_is_editable(self):
+        from engine.rules import RULES
+        t = load_targets()
+        editable = {p.rsplit(".", 1)[0] for p, _, _ in te.leaves(json.load(open(te.PATH, encoding="utf-8")))}
+        for r in RULES:
+            for g in te.groups_read_by(r["describe"], t, r["id"]):
+                self.assertTrue(any(e == g or e.startswith(g + ".") for e in editable), f"{r['id']} -> {g}")

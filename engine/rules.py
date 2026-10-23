@@ -534,12 +534,7 @@ def evaluate(parsed: dict[str, Any], patient: dict[str, Any] | None = None, targ
     warnings += parsed["warnings"]
     return {"findings": findings, "clinician_notes": notes, "warnings": warnings, "patient": patient,
             "problems_present": sorted(ctx.problems), "visit_date_be": ctx.visit["date_be"] if ctx.visit else None,
-            "targets_status": _status(t)}
-
-
-def _status(t: dict[str, Any]) -> str:
-    from . import signoff
-    return signoff.effective_status(t["_meta"].get("status"))
+            "targets_status": t["_meta"]["status"]}
 
 
 def _clean_patient(p: dict[str, Any]) -> dict[str, Any]:

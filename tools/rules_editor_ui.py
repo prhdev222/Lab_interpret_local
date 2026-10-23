@@ -83,7 +83,7 @@ JS = r'''    // ===== Rule editor (admin) =====
       if (RE.form) h += renderForm();
       const dis = new Set(RE.data.disable_builtin || []);
       h += '<hr style="margin:14px 0;border:none;border-top:1px solid var(--border);"><h3 style="font-size:14px;">กฎมาตรฐาน — ติ๊ก = ลบ/ปิดกฎนั้น (เมื่อมีมาตรฐานใหม่มาแทน) · ติ๊กออก = เอากลับมาใช้</h3><input type="text" oninput="builtinFilter(this.value)" placeholder="ค้นหากฎ เช่น hba1c, ldl, bp, ckd" style="width:100%;padding:6px;margin-bottom:6px;"><div style="font-size:12px;max-height:240px;overflow:auto;border:1px solid var(--border);border-radius:8px;padding:6px 10px;">' +
-        RE.builtin.map(b => `<label class="bl-row" data-q="${esc((b.id + ' ' + b.text).toLowerCase())}" style="display:block;margin:3px 0;"><input type="checkbox" ${dis.has(b.id) ? 'checked' : ''} data-id="${esc(b.id)}" onchange="builtinToggle(this.dataset.id)"> <b>${esc(b.id)}</b> <span style="color:var(--text-light)">${esc(b.text)}</span></label>`).join('') + '</div>';
+        RE.builtin.map(b => `<label class="bl-row" data-q="${esc((b.id + ' ' + b.text).toLowerCase())}" style="display:block;margin:3px 0;"><input type="checkbox" ${dis.has(b.id) ? 'checked' : ''} data-id="${esc(b.id)}" onchange="builtinToggle(this.dataset.id)"> <b>${esc(b.id)}</b> ${b.groups && b.groups.length ? `<button class="del-btn" data-id="${esc(b.id)}" onclick="ruleEditNumbers(this.dataset.id)">✏️ แก้เกณฑ์</button>` : ''} <span style="color:var(--text-light)">${esc(b.text)}</span></label>`).join('') + '</div>';
       document.getElementById('rulesBody').innerHTML = h;
     }
 
@@ -148,6 +148,15 @@ JS = r'''    // ===== Rule editor (admin) =====
     }
     function ruleToggle(i) { const r = RE.data.rules[i]; r.enabled = r.enabled === false; }
     function ruleDelete(i) { RE.data.rules.splice(i, 1); RE.form = null; renderRules(); }
+    async function ruleEditNumbers(id) {                 // a standard rule's numbers live in the thresholds page: open it at that rule's groups
+      const b = RE.builtin.find(x => x.id === id);
+      if (!b || !b.groups.length) return;
+      closeRulesModal();
+      await showTargetsModal();
+      const els = b.groups.map(g => document.querySelector(`#targetsBody [data-group="${g}"]`)).filter(Boolean);
+      els.forEach(el => { el.style.borderColor = '#F59E0B'; el.style.boxShadow = '0 0 0 3px #FDE68A'; });
+      if (els[0]) els[0].scrollIntoView({ block: 'start' });
+    }
     function builtinFilter(q) {
       q = q.trim().toLowerCase();
       document.querySelectorAll('#rulesBody .bl-row').forEach(el => { el.style.display = !q || el.dataset.q.includes(q) ? 'block' : 'none'; });
@@ -231,7 +240,7 @@ TARGETS_JS = r'''    // ===== Thresholds editor (admin) =====
       const order = [], by = {};
       TG.rows.forEach(r => { if (!by[r.group]) { by[r.group] = []; order.push(r.group); } by[r.group].push(r); });
       const inp = (r, idx) => `<input type="text" inputmode="decimal" value="${esc(idx === null ? r.value : r.value[idx])}" oninput="targetSet(this,${JSON.stringify(r.path).replace(/"/g, '&quot;')},'${r.kind}',${idx})" style="width:90px;padding:5px;">`;
-      document.getElementById('targetsBody').innerHTML = order.map(g => `<div style="margin-top:12px;border:1px solid var(--border);border-radius:10px;padding:8px 12px;"><b style="font-size:13px;">${esc(TG.groups[g] || g)}</b>` +
+      document.getElementById('targetsBody').innerHTML = order.map(g => `<div data-group="${esc(g)}" style="margin-top:12px;border:1px solid var(--border);border-radius:10px;padding:8px 12px;"><b style="font-size:13px;">${esc(TG.groups[g] || g)}</b>` +
         by[g].map(r => {
           let c;
           if (r.kind === 'num') c = inp(r, null);
@@ -338,7 +347,7 @@ LEARN_MODAL = r'''  <!-- ===== LEARNING LOG MODAL (admin) ===== -->
       <textarea id="learnOut" readonly spellcheck="false" style="display:none;width:100%;min-height:160px;margin-top:10px;font-family:monospace;font-size:11px;"></textarea>
       <hr style="margin:14px 0;border:none;border-top:1px solid var(--border);">
       <h3 style="font-size:14px;">💡 ข้อเสนอคำใหม่จากข้อมูลที่เก็บไว้</h3>
-      <p style="font-size:12.5px;">ระบบเสนอว่าคำย่อที่ไม่รู้จักน่าจะหมายถึงอะไร · <b>ไม่เพิ่มเองเลย</b> แพทย์ติ๊กเฉพาะข้อที่ถูก แล้วกดใช้ · ระบบปฏิเสธคำที่ซ้ำกับคำเดิม และปฏิเสธถ้าทำให้ที่เคยอ่านถูกกลับอ่านต่างไป · เมื่อเพิ่มคำแล้ว สถานะลงนามกลับเป็น DRAFT ต้องลงนามใหม่</p>
+      <p style="font-size:12.5px;">ระบบเสนอว่าคำย่อที่ไม่รู้จักน่าจะหมายถึงอะไร · <b>ไม่เพิ่มเองเลย</b> แพทย์ติ๊กเฉพาะข้อที่ถูก แล้วกดใช้ · ระบบปฏิเสธคำที่ซ้ำกับคำเดิม และปฏิเสธถ้าทำให้ที่เคยอ่านถูกกลับอ่านต่างไป</p>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;"><label style="font-size:12.5px;">พบอย่างน้อย <input type="text" id="sgMin" value="3" inputmode="numeric" maxlength="2" style="width:50px;padding:5px;display:inline-block;"> ครั้ง</label><button class="save" onclick="learnSuggest()">สร้างข้อเสนอ</button></div>
       <div id="sgBody" style="margin-top:8px;"></div>
       <div class="modal-btns" style="margin-top:14px;"><button class="cancel" onclick="closeLearnModal()">ปิด</button></div>
@@ -393,53 +402,10 @@ LEARN_JS = r'''    // ===== Learning log =====
       const chosen = SG.filter((s, i) => document.getElementById('sg' + i) && document.getElementById('sg' + i).checked).map(s => ({ kind: s.kind, term: s.term, target: s.target }));
       if (!chosen.length) { document.getElementById('learnAdminMsg').innerHTML = '<div style="margin:8px 0;padding:8px 10px;border-radius:8px;background:#FEE2E2;font-size:12.5px;">ยังไม่ได้ติ๊กข้อใด</div>'; return; }
       const d = await learnCall('/api/admin/learning', { action: 'apply', minCount: parseInt(document.getElementById('sgMin').value, 10) || 3, selected: chosen });
-      const msg = d.error ? esc(d.error) : d.success ? '✅ เพิ่มแล้ว: ' + d.applied.map(esc).join(', ') + (d.refused.length ? '<br>ไม่ได้เพิ่ม: ' + d.refused.map(esc).join('; ') : '') + '<br>สถานะลงนามกลับเป็น DRAFT ต้องตรวจและลงนามใหม่ · สำรองพจนานุกรมเดิมที่ data/lexicon.json.bak'
+      const msg = d.error ? esc(d.error) : d.success ? '✅ เพิ่มแล้ว: ' + d.applied.map(esc).join(', ') + (d.refused.length ? '<br>ไม่ได้เพิ่ม: ' + d.refused.map(esc).join('; ') : '') + '<br>สำรองพจนานุกรมเดิมที่ data/lexicon.json.bak'
         : '❌ ยังไม่ได้เพิ่ม' + (d.refused && d.refused.length ? '<br>' + d.refused.map(esc).join('; ') : '') + (d.regression && d.regression.length ? '<br>จะทำให้บันทึกที่เคยอ่านถูกอ่านต่างไป:<br>' + d.regression.map(esc).join('<br>') : '');
       document.getElementById('learnAdminMsg').innerHTML = `<div style="margin:8px 0;padding:8px 10px;border-radius:8px;background:${d.success ? '#DCFCE7' : '#FEE2E2'};font-size:12.5px;">${msg}</div>`;
       if (d.success) await learnSuggest();
     }
-
-'''
-
-
-SIGN_MODAL = r'''  <!-- ===== SIGN-OFF MODAL (admin) ===== -->
-  <div class="modal-overlay" id="signModal">
-    <div class="modal" style="max-width:700px;max-height:92vh;overflow:auto;">
-      <h3>✍️ ลงนามรับรองกฎและเกณฑ์</h3>
-      <p style="font-size:12.5px;">ลงนามได้เมื่อแพทย์ตรวจครบ (ระบุอ้างอิงทุกกลุ่ม และยืนยันผลตัวอย่างทุกข้อ) · การลงนามผูกกับเนื้อหาที่ตรวจ ถ้าแก้เกณฑ์ ถ้อยคำ พจนานุกรม หรือกฎหลังลงนาม สถานะจะกลับเป็น DRAFT เอง · ระบบบันทึกชื่อผู้ลงนามและวันที่เท่านั้น ไม่ได้ตัดสินความถูกต้องทางคลินิก</p>
-      <div id="signMsg"></div>
-      <div id="signBody"></div>
-      <div class="modal-btns" style="margin-top:14px;"><button class="cancel" onclick="closeSignModal()">ปิด</button></div>
-    </div>
-  </div>
-
-'''
-
-SIGN_JS = r'''    // ===== Sign-off (admin) =====
-    async function signCall(body) {
-      const res = await fetch(API + '/api/admin/signoff', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify(body) });
-      return res.json();
-    }
-    function signMsg(html, bad) { document.getElementById('signMsg').innerHTML = html ? `<div style="margin:8px 0;padding:8px 10px;border-radius:8px;background:${bad ? '#FEE2E2' : '#DCFCE7'};font-size:12.5px;">${html}</div>` : ''; }
-    async function showSignModal() { document.getElementById('signModal').classList.add('show'); await renderSign(); }
-    function closeSignModal() { document.getElementById('signModal').classList.remove('show'); }
-    async function renderSign() {
-      const d = await signCall({ action: 'status' });
-      if (d.error) { signMsg(esc(d.error), true); return; }
-      signMsg('สถานะตอนนี้: <b>' + esc(d.status) + '</b>', !d.state.signed);
-      let h = d.blockers.length ? '<div style="margin-top:8px;"><b>ยังลงนามไม่ได้ เพราะ:</b><br>' + d.blockers.map(b => '✗ ' + esc(b)).join('<br>') + '</div>' : '<div style="margin-top:8px;">✓ เงื่อนไขครบ พร้อมลงนาม</div>';
-      h += `<div style="margin-top:10px;"><input type="text" id="signName" maxlength="60" placeholder="ชื่อผู้ตรวจรับรอง เช่น นพ.สมชาย ใจดี" style="width:100%;padding:8px;"></div>` +
-        `<div style="margin-top:6px;"><input type="text" id="signPhrase" placeholder="พิมพ์ ${esc(d.phrase)} เพื่อยืนยัน" style="width:100%;padding:8px;"></div>` +
-        '<div style="margin-top:8px;"><button class="save" onclick="signDo()">ลงนามรับรอง</button> ' + (d.state.signed || d.state.edited_after ? '<button class="cancel" onclick="signRevoke()">ถอนการลงนาม</button>' : '') + '</div>';
-      if (d.history.length) h += '<div style="margin-top:10px;font-size:12px;color:var(--text-light);">ประวัติ: ' + d.history.map(x => esc(x.date) + ' ' + (x.action === 'sign' ? 'ลงนามโดย ' : 'ถอนโดย ') + esc(x.by)).join(' · ') + '</div>';
-      document.getElementById('signBody').innerHTML = h;
-    }
-    async function signDo() {
-      const d = await signCall({ action: 'sign', name: document.getElementById('signName').value, phrase: document.getElementById('signPhrase').value });
-      if (d.error) { signMsg(esc(d.error), true); return; }
-      await renderSign();
-      if (!d.success) signMsg('❌ ยังไม่ได้ลงนาม:<br>' + d.errors.map(esc).join('<br>'), true);
-    }
-    async function signRevoke() { await signCall({ action: 'revoke' }); await renderSign(); }
 
 '''

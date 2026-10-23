@@ -72,7 +72,7 @@ class Page(unittest.TestCase):
 
     def test_every_admin_tool_is_inside_the_single_settings_menu(self):
         menu = re.search(r'<div class="menu-list" id="adminMenuList">(.*?)</div>\s*</div>', HTML, re.S).group(1)
-        tools = ("rulesBtn", "targetsBtn", "goldenBtn", "signBtn", "learnBtn", "statsBtn", "adminBtn")
+        tools = ("rulesBtn", "targetsBtn", "goldenBtn", "learnBtn", "statsBtn", "adminBtn")
         for t in tools:
             self.assertIn(f'id="{t}"', menu, t)
         header = HTML[HTML.index('<div class="header-right">'):HTML.index('<!-- ===== RULES MODAL')]

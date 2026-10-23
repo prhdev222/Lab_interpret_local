@@ -11,6 +11,7 @@ import datetime
 import json
 import math
 import os
+from collections.abc import Mapping
 from typing import Any
 
 from .lexicon import DATA_DIR
@@ -91,6 +92,44 @@ KEYS = {
     "mmrc_high_from": "อาการมากเมื่อ mMRC ≥", "cat_high_from": "อาการมากเมื่อ CAT ≥", "frequent_from": "กำเริบบ่อยเมื่อ ≥ (ครั้ง/ปี)", "hosp_from": "รุนแรงเมื่อนอน รพ. ≥ (ครั้ง)", "good_from": "ควบคุมได้ดีตั้งแต่",
     "partly_from": "ไม่ดีนักตั้งแต่ (ต่ำกว่า = ควบคุมไม่ได้)", "green_from": "โซนเขียวตั้งแต่", "yellow_from": "โซนเหลืองตั้งแต่ (ต่ำกว่า = แดง)", "moderate_from_": "", "applicable_age": "ช่วงอายุที่ใช้ได้ (ต่ำสุด, สูงสุด)",
     "source": "อ้างอิงฉบับ/แนวทาง", "needs_citation": "ยังต้องระบุฉบับอ้างอิง", "check_note": "หมายเหตุ"}
+
+
+class _Rec(Mapping):
+    """Wraps the thresholds and records which numbers are read (so a rule can be linked to its numbers). Behaves like the real dict."""
+    def __init__(self, data, path, seen):
+        self._data, self._path, self._seen = data, path, seen
+
+    def __getitem__(self, k):
+        v = self._data[k]
+        p = self._path + [str(k)]
+        if isinstance(v, dict):
+            return _Rec(v, p, self._seen)
+        self._seen.add(".".join(p))
+        return v
+
+    def __iter__(self):
+        return iter(self._data)
+
+    def __len__(self):
+        return len(self._data)
+
+
+# numbers a rule reads in its code but does not mention in its description text
+EXTRA_GROUPS = {
+    "dn.possible": ["ckd.albuminuria"], "ckd.kdigo_risk": ["ckd.egfr_stage", "ckd.albuminuria"], "copd.group": ["copd.symptoms", "copd.exac"],
+    "liver.discord": ["mafld.fib4", "mafld.lsm"], "life.smoking": ["lifestyle"], "copd.exac": ["copd.exac"], "dlp.ldl.status": ["dlp.ldl"],
+}
+
+
+def groups_read_by(describe, targets: dict, rule_id: str = "") -> list[str]:
+    """Dotted threshold groups (e.g. 'dm.hba1c') whose numbers a rule uses: those in its description, plus EXTRA_GROUPS for the rest.
+    Empty list = the rule has no numbers to edit. tests/test_targets_edit.py checks this against what the rules really read."""
+    seen: set[str] = set()
+    try:
+        describe(_Rec(targets, [], seen))
+    except Exception:
+        pass
+    return sorted({p.rsplit(".", 1)[0] for p in seen if "." in p and not p.startswith("_meta")} | set(EXTRA_GROUPS.get(rule_id, [])))
 
 
 def leaves(t: dict, prefix: str = "") -> list[tuple[str, str, Any]]:
