@@ -213,8 +213,15 @@ def problem_suggestions(rows: list[dict], lex, prof: dict, min_count: int) -> li
     return out
 
 
+def _known_terms(lex) -> set[str]:
+    return ({re.sub(r"\s+", "", a.lower()) for a in lex.param_alias} | {re.sub(r"\s+", "", a.lower()) for a in lex.problem_alias}
+            | {re.sub(r"\s+", "", ph.lower()) for spec in lex.concepts.values() for ph in spec["phrases"]})
+
+
 def learn_rows(rows: list[dict], min_count: int = 3) -> list[dict]:
     lex = load_lexicon()
+    known = _known_terms(lex)
+    rows = [r for r in rows if r["k"] in ("known",) or re.sub(r"\s+", "", r["t"].lower()) not in known]       # already approved terms are not proposed again
     prof = profile_from_rows(rows)
     sugg: list[dict] = []
     for w, c in candidates_from_rows(rows).items():

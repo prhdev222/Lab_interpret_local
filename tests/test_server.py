@@ -448,6 +448,71 @@ class RuleEditor(ServerCase):
             self.assertEqual(code, 200); self.assertFalse(d["success"])
 
 
+class LearningSuggestions(ServerCase):
+    """The approve-in-the-browser loop, on a private copy of the dictionary."""
+    @classmethod
+    def corpus_rows(cls):
+        from tests.test_learn_terms import TEXTS
+        from tools.learn_terms import extract_rows
+        return [r for t in TEXTS for r in extract_rows(t)]
+
+    def setUp(self):
+        import engine.lexicon as lexmod
+        from engine import learning_log
+        from tools import apply_terms
+        self.lexmod, self.ll, self.at = lexmod, learning_log, apply_terms
+        d = tempfile.mkdtemp()
+        with open(os.path.join(lexmod.DATA_DIR, "lexicon.json"), encoding="utf-8") as f, open(os.path.join(d, "lexicon.json"), "w", encoding="utf-8") as g: g.write(f.read())
+        self.saved = (lexmod.DATA_DIR, apply_terms.LEXICON, learning_log.PATH)
+        lexmod.DATA_DIR, apply_terms.LEXICON, learning_log.PATH = d, os.path.join(d, "lexicon.json"), os.path.join(d, "log.json")
+        self.addCleanup(lambda: (setattr(lexmod, "DATA_DIR", self.saved[0]), setattr(apply_terms, "LEXICON", self.saved[1]), setattr(learning_log, "PATH", self.saved[2])))
+        learning_log.set_enabled(True); learning_log.add_rows(self.corpus_rows())
+        self.token = self.login()[1]["token"]
+
+    def adm(self, token=None, **kw):
+        return self.call("/api/admin/learning", kw, token=token or self.token)
+
+    def test_admin_only(self):
+        self.call("/api/admin/users", {"action": "add", "username": "nurse7", "displayName": "n", "pin": "654321"}, token=self.token)
+        t2 = self.login("nurse7", "654321")[1]["token"]
+        for action in ("suggest", "apply"):
+            self.assertEqual(self.adm(token=t2, action=action, selected=[{"kind": "param_alias", "term": "bs", "target": "FBS"}])[0], 403)
+
+    def test_suggest_lists_the_new_abbreviations(self):
+        d = self.adm(action="suggest", minCount=5)[1]
+        by = {s["term"]: s for s in d["suggestions"]}
+        for term, target in (("bs", "FBS"), ("crea", "Creatinine"), ("hba", "HbA1c")):
+            self.assertEqual(by[term]["target"], target)
+        self.assertGreater(d["rows"], 100)
+
+    def test_apply_adds_the_word_checks_it_and_does_not_propose_it_again(self):
+        code, d, _ = self.adm(action="apply", minCount=5, selected=[{"kind": "param_alias", "term": "bs", "target": "FBS"}])
+        self.assertEqual(code, 200); self.assertTrue(d["success"], d); self.assertEqual(d["applied"], ["bs → FBS"])
+        lex = json.load(open(self.at.LEXICON, encoding="utf-8")); self.assertIn("bs", lex["params"]["FBS"]["aliases"])
+        self.assertTrue(os.path.exists(self.at.LEXICON + ".bak"))
+        self.assertNotIn("bs", {s["term"] for s in self.adm(action="suggest", minCount=5)[1]["suggestions"]})
+        from engine.parse_note import parse_note
+        self.assertEqual(parse_note("DM : BS 118")["problems"][0]["values"][0]["param"], "FBS")                 # the engine really reads it now
+
+    def test_the_page_cannot_inject_words_the_learner_did_not_propose(self):
+        self.assertEqual(self.adm(action="apply", minCount=5, selected=[{"kind": "param_alias", "term": "evil", "target": "FBS"}])[0], 400)
+        self.assertEqual(self.adm(action="apply", minCount=5, selected=[{"kind": "param_alias", "term": "bs", "target": "HbA1c"}])[0], 400)         # wrong target
+        self.assertEqual(self.adm(action="apply", minCount=5, selected=[])[0], 400)
+        self.assertEqual(self.adm(action="apply", minCount=5)[0], 400)
+        self.assertNotIn("evil", open(self.at.LEXICON, encoding="utf-8").read())
+
+    def test_regression_guard_blocks_the_write(self):
+        self.at_regression = self.at.regression
+        self.at.regression = lambda *a, **k: ["บันทึกที่ 1: ค่า FBS เปลี่ยน"]
+        self.addCleanup(lambda: setattr(self.at, "regression", self.at_regression))
+        before = open(self.at.LEXICON, "rb").read()
+        d = self.adm(action="apply", minCount=5, selected=[{"kind": "param_alias", "term": "bs", "target": "FBS"}])[1]
+        self.assertFalse(d["success"]); self.assertTrue(d["regression"]); self.assertEqual(open(self.at.LEXICON, "rb").read(), before)
+
+    def test_bad_min_count(self):
+        self.assertEqual(self.adm(action="suggest", minCount="abc")[0], 400)
+
+
 class SignoffEndpoint(ServerCase):
     def setUp(self):
         self.token = self.login()[1]["token"]

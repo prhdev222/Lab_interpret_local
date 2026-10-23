@@ -336,6 +336,11 @@ LEARN_MODAL = r'''  <!-- ===== LEARNING LOG MODAL (admin) ===== -->
         <button class="cancel" onclick="learnAdminClear()">ล้างทั้งหมด</button>
       </div>
       <textarea id="learnOut" readonly spellcheck="false" style="display:none;width:100%;min-height:160px;margin-top:10px;font-family:monospace;font-size:11px;"></textarea>
+      <hr style="margin:14px 0;border:none;border-top:1px solid var(--border);">
+      <h3 style="font-size:14px;">💡 ข้อเสนอคำใหม่จากข้อมูลที่เก็บไว้</h3>
+      <p style="font-size:12.5px;">ระบบเสนอว่าคำย่อที่ไม่รู้จักน่าจะหมายถึงอะไร · <b>ไม่เพิ่มเองเลย</b> แพทย์ติ๊กเฉพาะข้อที่ถูก แล้วกดใช้ · ระบบปฏิเสธคำที่ซ้ำกับคำเดิม และปฏิเสธถ้าทำให้ที่เคยอ่านถูกกลับอ่านต่างไป · เมื่อเพิ่มคำแล้ว สถานะลงนามกลับเป็น DRAFT ต้องลงนามใหม่</p>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;"><label style="font-size:12.5px;">พบอย่างน้อย <input type="text" id="sgMin" value="3" inputmode="numeric" maxlength="2" style="width:50px;padding:5px;display:inline-block;"> ครั้ง</label><button class="save" onclick="learnSuggest()">สร้างข้อเสนอ</button></div>
+      <div id="sgBody" style="margin-top:8px;"></div>
       <div class="modal-btns" style="margin-top:14px;"><button class="cancel" onclick="closeLearnModal()">ปิด</button></div>
     </div>
   </div>
@@ -364,11 +369,35 @@ LEARN_JS = r'''    // ===== Learning log =====
       document.getElementById('learnBox').innerHTML = d.error ? '<span style="color:#B91C1C">' + esc(d.error) + '</span>' : '✅ เก็บแล้ว ' + esc(d.stored) + ' รายการ';
     }
     function learnAdminMsg(st) { document.getElementById('learnAdminMsg').innerHTML = `<div style="margin:8px 0;padding:8px 10px;border-radius:8px;background:#EEF2FF;font-size:12.5px;">สถานะ: ${st.enabled ? 'เปิด' : 'ปิด'} · เก็บไว้ ${esc(st.rows)} รายการ (สูงสุด ${esc(st.max)})</div>`; document.getElementById('learnToggle').checked = !!st.enabled; }
-    async function showLearnModal() { document.getElementById('learnModal').classList.add('show'); document.getElementById('learnOut').style.display = 'none'; learnAdminMsg(await learnCall('/api/admin/learning', { action: 'status' })); }
+    async function showLearnModal() { document.getElementById('learnModal').classList.add('show'); document.getElementById('learnOut').style.display = 'none'; document.getElementById('sgBody').innerHTML = ''; learnAdminMsg(await learnCall('/api/admin/learning', { action: 'status' })); }
     function closeLearnModal() { document.getElementById('learnModal').classList.remove('show'); }
     async function learnAdminSet(on) { learnAdminMsg(await learnCall('/api/admin/learning', { action: 'set', enabled: on })); }
     async function learnAdminExport() { const d = await learnCall('/api/admin/learning', { action: 'export' }); const o = document.getElementById('learnOut'); o.style.display = 'block'; o.value = JSON.stringify(d); }
     async function learnAdminClear() { learnAdminMsg(await learnCall('/api/admin/learning', { action: 'clear' })); document.getElementById('learnOut').style.display = 'none'; }
+    let SG = [];
+    const SG_EV = { median_here: 'ค่ากลางที่พบ', median_known: 'ค่ากลางของค่าที่รู้จัก', inside_range: 'อยู่ในช่วงที่เป็นไปได้', line_context: 'บรรทัดโรคตรงกัน', spelling: 'สะกดใกล้กัน', range_specificity: 'ช่วงค่าแคบ (ชี้ชัด)', known_param_also_in_same_line: 'ค่านี้เขียนอยู่ในบรรทัดเดียวกันแล้ว (ยิ่งสูงยิ่งไม่น่าใช่ชื่อแทน)' };
+    const SG_KIND = { param_alias: 'ค่า', concept_phrase: 'อาการ', problem_alias: 'ชื่อโรค' };
+    async function learnSuggest() {
+      const d = await learnCall('/api/admin/learning', { action: 'suggest', minCount: parseInt(document.getElementById('sgMin').value, 10) || 3 });
+      const box = document.getElementById('sgBody');
+      if (d.error) { box.innerHTML = '<span style="color:#B91C1C">' + esc(d.error) + '</span>'; return; }
+      SG = d.suggestions.filter(s => s.target);
+      if (!SG.length) { box.innerHTML = '<div style="font-size:12.5px;">ยังไม่มีข้อเสนอ (ข้อมูลที่เก็บไว้ ' + esc(d.rows) + ' แถว ยังไม่พอ หรือทุกคำอยู่ในพจนานุกรมแล้ว) · ลองลดจำนวนครั้งขั้นต่ำ</div>'; return; }
+      box.innerHTML = SG.map((s, i) => `<label style="display:block;margin-top:6px;padding:6px 8px;border:1px solid var(--border);border-radius:8px;font-size:12.5px;text-transform:none;font-weight:400;">` +
+        `<input type="checkbox" style="width:auto;" id="sg${i}"> <b>${esc(s.term)}</b> → <b>${esc(s.target)}</b> <span style="color:var(--text-light)">(${esc(SG_KIND[s.kind] || s.kind)} · พบ ${esc(s.notes)} ครั้ง · คะแนน ${esc(s.score)}</span>` +
+        (s.confidence === 'low' ? ' <span style="color:#B45309">· ไม่แน่ใจ ตรวจให้ดี</span>' : '') + `)<div style="color:var(--text-light);margin-left:22px;">${esc(typeof s.evidence === 'string' ? s.evidence : Object.entries(s.evidence).map(([k, v]) => (SG_EV[k] || k) + ' ' + v).join(' · '))}` +
+        (s.alternatives.length ? ' · ตัวเลือกอื่น: ' + s.alternatives.map(a => esc(a.target) + ' ' + esc(a.score)).join(', ') : '') + '</div></label>').join('') +
+        '<div style="margin-top:8px;"><button class="save" onclick="learnApply()">ใช้ข้อที่เลือก</button></div>';
+    }
+    async function learnApply() {
+      const chosen = SG.filter((s, i) => document.getElementById('sg' + i) && document.getElementById('sg' + i).checked).map(s => ({ kind: s.kind, term: s.term, target: s.target }));
+      if (!chosen.length) { document.getElementById('learnAdminMsg').innerHTML = '<div style="margin:8px 0;padding:8px 10px;border-radius:8px;background:#FEE2E2;font-size:12.5px;">ยังไม่ได้ติ๊กข้อใด</div>'; return; }
+      const d = await learnCall('/api/admin/learning', { action: 'apply', minCount: parseInt(document.getElementById('sgMin').value, 10) || 3, selected: chosen });
+      const msg = d.error ? esc(d.error) : d.success ? '✅ เพิ่มแล้ว: ' + d.applied.map(esc).join(', ') + (d.refused.length ? '<br>ไม่ได้เพิ่ม: ' + d.refused.map(esc).join('; ') : '') + '<br>สถานะลงนามกลับเป็น DRAFT ต้องตรวจและลงนามใหม่ · สำรองพจนานุกรมเดิมที่ data/lexicon.json.bak'
+        : '❌ ยังไม่ได้เพิ่ม' + (d.refused && d.refused.length ? '<br>' + d.refused.map(esc).join('; ') : '') + (d.regression && d.regression.length ? '<br>จะทำให้บันทึกที่เคยอ่านถูกอ่านต่างไป:<br>' + d.regression.map(esc).join('<br>') : '');
+      document.getElementById('learnAdminMsg').innerHTML = `<div style="margin:8px 0;padding:8px 10px;border-radius:8px;background:${d.success ? '#DCFCE7' : '#FEE2E2'};font-size:12.5px;">${msg}</div>`;
+      if (d.success) await learnSuggest();
+    }
 
 '''
 

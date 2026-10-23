@@ -233,6 +233,23 @@ def make_handler(db: DB, quiet: bool = True):
                 return self.js(learning_log.export())
             if action == "clear":
                 learning_log.clear(); return self.js(learning_log.status())
+            if action in ("suggest", "apply"):
+                from tools import apply_terms, learn_terms
+                try:
+                    min_count = max(1, min(50, int(d.get("minCount", 3))))
+                except (TypeError, ValueError):
+                    return self.err(400, "minCount ไม่ถูกต้อง")
+                suggestions = learn_terms.learn_rows(learning_log.export()["rows"], min_count)       # always recomputed here: the page cannot inject its own words
+                if action == "suggest":
+                    return self.js({"suggestions": suggestions, "rows": learning_log.status()["rows"], "minCount": min_count})
+                want = d.get("selected")
+                if not isinstance(want, list) or not want:
+                    return self.err(400, "ยังไม่ได้เลือกข้อ")
+                keys = {(w.get("kind"), w.get("term"), w.get("target")) for w in want if isinstance(w, dict)}
+                chosen = [s for s in suggestions if (s["kind"], s["term"], s["target"]) in keys and s["kind"] in apply_terms.KINDS]
+                if not chosen:
+                    return self.err(400, "ข้อที่เลือกไม่ตรงกับข้อเสนอปัจจุบัน (ข้อมูลอาจเปลี่ยน) ให้สร้างข้อเสนอใหม่")
+                return self.js(apply_terms.apply_and_write(chosen))
             self.err(400, "action ไม่ถูกต้อง")
 
         def admin_rules(self, d):

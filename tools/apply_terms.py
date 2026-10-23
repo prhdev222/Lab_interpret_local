@@ -102,6 +102,26 @@ def check_corpus(user_texts: list[str]) -> list[str]:
     return [c["note"] for c in golden.load()] + [synth_notes.make(rnd)["note"] for _ in range(150)] + user_texts
 
 
+def apply_and_write(selected: list[dict], path: str | None = None) -> dict:
+    """For the web page: apply the approved suggestions to the dictionary with the same checks as the command line. Writes only if every check passes."""
+    path = path or LEXICON
+    with open(path, encoding="utf-8") as f:
+        old = json.load(f)
+    new, done, refused = apply(old, [dict(s, approve=True) for s in selected])
+    if not done:
+        return {"success": False, "applied": [], "refused": refused, "regression": []}
+    bad = regression(old, new, check_corpus([]))
+    if bad:
+        return {"success": False, "applied": [], "refused": refused, "regression": bad[:20]}
+    with open(path + ".bak", "w", encoding="utf-8") as f:
+        json.dump(old, f, ensure_ascii=False, indent=1)
+    tmp = path + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(new, f, ensure_ascii=False, indent=1)
+    os.replace(tmp, path)
+    return {"success": True, "applied": done, "refused": refused, "regression": []}
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("file"); ap.add_argument("--notes"); ap.add_argument("--write", action="store_true"); ap.add_argument("--lexicon", default=LEXICON)
