@@ -1232,7 +1232,7 @@
     <div class="header-right">
       <span class="monk-badge" id="monkBadge">🙏 ภาษาสงฆ์</span>
       <button class="hdr-btn" onclick="showStatsModal()" id="statsBtn" style="display:none">📊 สถิติ</button>
-      <button class="hdr-btn" onclick="showLearnModal()" id="learnBtn" style="display:none">🧠 เรียนรู้</button>
+      <button class="hdr-btn" onclick="showSignModal()" id="signBtn" style="display:none">✍️ ลงนาม</button>\n      <button class="hdr-btn" onclick="showLearnModal()" id="learnBtn" style="display:none">🧠 เรียนรู้</button>
       <button class="hdr-btn" onclick="showGoldenModal()" id="goldenBtn" style="display:none">✅ ตัวอย่าง</button>
       <button class="hdr-btn" onclick="showTargetsModal()" id="targetsBtn" style="display:none">🎯 เกณฑ์</button>
       <button class="hdr-btn" onclick="showRulesModal()" id="rulesBtn" style="display:none">📐 กฎ</button>
@@ -1311,6 +1311,17 @@
       </div>
       <textarea id="learnOut" readonly spellcheck="false" style="display:none;width:100%;min-height:160px;margin-top:10px;font-family:monospace;font-size:11px;"></textarea>
       <div class="modal-btns" style="margin-top:14px;"><button class="cancel" onclick="closeLearnModal()">ปิด</button></div>
+    </div>
+  </div>
+
+  <!-- ===== SIGN-OFF MODAL (admin) ===== -->
+  <div class="modal-overlay" id="signModal">
+    <div class="modal" style="max-width:700px;max-height:92vh;overflow:auto;">
+      <h3>✍️ ลงนามรับรองกฎและเกณฑ์</h3>
+      <p style="font-size:12.5px;">ลงนามได้เมื่อแพทย์ตรวจครบ (ระบุอ้างอิงทุกกลุ่ม และยืนยันผลตัวอย่างทุกข้อ) · การลงนามผูกกับเนื้อหาที่ตรวจ ถ้าแก้เกณฑ์ ถ้อยคำ พจนานุกรม หรือกฎหลังลงนาม สถานะจะกลับเป็น DRAFT เอง · ระบบบันทึกชื่อผู้ลงนามและวันที่เท่านั้น ไม่ได้ตัดสินความถูกต้องทางคลินิก</p>
+      <div id="signMsg"></div>
+      <div id="signBody"></div>
+      <div class="modal-btns" style="margin-top:14px;"><button class="cancel" onclick="closeSignModal()">ปิด</button></div>
     </div>
   </div>
 
@@ -1603,7 +1614,7 @@
         if (sel.options[i].value === (roleMap[currentUser.role] || 'อื่นๆ')) { sel.selectedIndex = i; break; }
       }
       if (currentUser.isAdmin) {
-        document.getElementById('adminBtn').style.display = 'inline-flex'; document.getElementById('rulesBtn').style.display = 'inline-flex'; document.getElementById('targetsBtn').style.display = 'inline-flex'; document.getElementById('goldenBtn').style.display = 'inline-flex'; document.getElementById('learnBtn').style.display = 'inline-flex';
+        document.getElementById('adminBtn').style.display = 'inline-flex'; document.getElementById('rulesBtn').style.display = 'inline-flex'; document.getElementById('targetsBtn').style.display = 'inline-flex'; document.getElementById('goldenBtn').style.display = 'inline-flex'; document.getElementById('learnBtn').style.display = 'inline-flex'; document.getElementById('signBtn').style.display = 'inline-flex';
         document.getElementById('statsBtn').style.display = 'inline-flex';
       }
     }
@@ -1616,7 +1627,7 @@
       document.getElementById('lockScreen').classList.remove('hidden');
       document.getElementById('loginPin').value = '';
       document.getElementById('loginError').textContent = '';
-      document.getElementById('adminBtn').style.display = 'none'; document.getElementById('rulesBtn').style.display = 'none'; document.getElementById('targetsBtn').style.display = 'none'; document.getElementById('goldenBtn').style.display = 'none'; document.getElementById('learnBtn').style.display = 'none';
+      document.getElementById('adminBtn').style.display = 'none'; document.getElementById('rulesBtn').style.display = 'none'; document.getElementById('targetsBtn').style.display = 'none'; document.getElementById('goldenBtn').style.display = 'none'; document.getElementById('learnBtn').style.display = 'none'; document.getElementById('signBtn').style.display = 'none';
       document.getElementById('statsBtn').style.display = 'none';
     }
 
@@ -1912,6 +1923,33 @@
     async function learnAdminSet(on) { learnAdminMsg(await learnCall('/api/admin/learning', { action: 'set', enabled: on })); }
     async function learnAdminExport() { const d = await learnCall('/api/admin/learning', { action: 'export' }); const o = document.getElementById('learnOut'); o.style.display = 'block'; o.value = JSON.stringify(d); }
     async function learnAdminClear() { learnAdminMsg(await learnCall('/api/admin/learning', { action: 'clear' })); document.getElementById('learnOut').style.display = 'none'; }
+
+    // ===== Sign-off (admin) =====
+    async function signCall(body) {
+      const res = await fetch(API + '/api/admin/signoff', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify(body) });
+      return res.json();
+    }
+    function signMsg(html, bad) { document.getElementById('signMsg').innerHTML = html ? `<div style="margin:8px 0;padding:8px 10px;border-radius:8px;background:${bad ? '#FEE2E2' : '#DCFCE7'};font-size:12.5px;">${html}</div>` : ''; }
+    async function showSignModal() { document.getElementById('signModal').classList.add('show'); await renderSign(); }
+    function closeSignModal() { document.getElementById('signModal').classList.remove('show'); }
+    async function renderSign() {
+      const d = await signCall({ action: 'status' });
+      if (d.error) { signMsg(esc(d.error), true); return; }
+      signMsg('สถานะตอนนี้: <b>' + esc(d.status) + '</b>', !d.state.signed);
+      let h = d.blockers.length ? '<div style="margin-top:8px;"><b>ยังลงนามไม่ได้ เพราะ:</b><br>' + d.blockers.map(b => '✗ ' + esc(b)).join('<br>') + '</div>' : '<div style="margin-top:8px;">✓ เงื่อนไขครบ พร้อมลงนาม</div>';
+      h += `<div style="margin-top:10px;"><input type="text" id="signName" maxlength="60" placeholder="ชื่อผู้ตรวจรับรอง เช่น นพ.สมชาย ใจดี" style="width:100%;padding:8px;"></div>` +
+        `<div style="margin-top:6px;"><input type="text" id="signPhrase" placeholder="พิมพ์ ${esc(d.phrase)} เพื่อยืนยัน" style="width:100%;padding:8px;"></div>` +
+        '<div style="margin-top:8px;"><button class="save" onclick="signDo()">ลงนามรับรอง</button> ' + (d.state.signed || d.state.edited_after ? '<button class="cancel" onclick="signRevoke()">ถอนการลงนาม</button>' : '') + '</div>';
+      if (d.history.length) h += '<div style="margin-top:10px;font-size:12px;color:var(--text-light);">ประวัติ: ' + d.history.map(x => esc(x.date) + ' ' + (x.action === 'sign' ? 'ลงนามโดย ' : 'ถอนโดย ') + esc(x.by)).join(' · ') + '</div>';
+      document.getElementById('signBody').innerHTML = h;
+    }
+    async function signDo() {
+      const d = await signCall({ action: 'sign', name: document.getElementById('signName').value, phrase: document.getElementById('signPhrase').value });
+      if (d.error) { signMsg(esc(d.error), true); return; }
+      await renderSign();
+      if (!d.success) signMsg('❌ ยังไม่ได้ลงนาม:<br>' + d.errors.map(esc).join('<br>'), true);
+    }
+    async function signRevoke() { await signCall({ action: 'revoke' }); await renderSign(); }
 
     // ===== Admin =====
     async function showAdminModal() {

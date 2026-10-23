@@ -448,6 +448,24 @@ class RuleEditor(ServerCase):
             self.assertEqual(code, 200); self.assertFalse(d["success"])
 
 
+class SignoffEndpoint(ServerCase):
+    def setUp(self):
+        self.token = self.login()[1]["token"]
+
+    def test_admin_only_and_status_lists_blockers(self):
+        self.call("/api/admin/users", {"action": "add", "username": "nurse6", "displayName": "n", "pin": "654321"}, token=self.token)
+        t2 = self.login("nurse6", "654321")[1]["token"]
+        self.assertEqual(self.call("/api/admin/signoff", {"action": "status"}, token=t2)[0], 403)
+        self.assertEqual(self.call("/api/admin/signoff", {"action": "status"})[0], 401)
+        d = self.call("/api/admin/signoff", {"action": "status"}, token=self.token)[1]
+        self.assertFalse(d["state"]["signed"]); self.assertIn("DRAFT", d["status"]); self.assertTrue(d["blockers"])
+
+    def test_signing_is_refused_while_the_shipped_draft_has_open_items(self):
+        d = self.call("/api/admin/signoff", {"action": "sign", "name": "นพ.ทดสอบ", "phrase": "ลงนามรับรอง"}, token=self.token)[1]
+        self.assertFalse(d["success"]); self.assertTrue(d["errors"])
+        self.assertEqual(self.call("/api/admin/signoff", {"action": "nope"}, token=self.token)[0], 400)
+
+
 class Transport(ServerCase):
     def test_security_headers_and_page(self):
         code, _, h = self.call("/", method="GET")

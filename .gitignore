@@ -9,3 +9,4 @@ __pycache__/
 *.pyc
 .DS_Store
 data/learning_log.json*
+data/signoff.json*

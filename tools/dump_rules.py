@@ -27,7 +27,8 @@ def flat(d, prefix=""):
 L = []
 add = L.append
 add("# เอกสารตรวจกฎ (สร้างอัตโนมัติ จากกฎและไฟล์ข้อมูลที่รันอยู่จริง)\n")
-add(f"สถานะ: **{t['_meta']['status']}**  ·  เวอร์ชันข้อมูล: {t['_meta']['version']}\n")
+from engine import signoff  # noqa: E402
+add(f"สถานะ: **{signoff.effective_status(t['_meta']['status'])}**  ·  เวอร์ชันข้อมูล: {t['_meta']['version']}\n")
 add("> ห้ามใช้กับผู้ป่วยจริงจนกว่าแพทย์จะตรวจทุกข้อด้านล่างและลงนามรับรอง แก้เกณฑ์ที่ `data/targets.json` แก้ถ้อยคำที่ `data/templates.json` แก้คำสงฆ์ที่ `data/glossary.json` แล้วรัน `python3 tools/dump_rules.py` เพื่อสร้างเอกสารนี้ใหม่ และ `python3 -m unittest discover -s tests -t .` เพื่อตรวจว่าไม่มีอะไรพัง\n")
 
 add("## 1. คำถามที่ต้องให้แพทย์ตัดสินใจ\n")

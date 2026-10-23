@@ -371,3 +371,46 @@ LEARN_JS = r'''    // ===== Learning log =====
     async function learnAdminClear() { learnAdminMsg(await learnCall('/api/admin/learning', { action: 'clear' })); document.getElementById('learnOut').style.display = 'none'; }
 
 '''
+
+
+SIGN_MODAL = r'''  <!-- ===== SIGN-OFF MODAL (admin) ===== -->
+  <div class="modal-overlay" id="signModal">
+    <div class="modal" style="max-width:700px;max-height:92vh;overflow:auto;">
+      <h3>✍️ ลงนามรับรองกฎและเกณฑ์</h3>
+      <p style="font-size:12.5px;">ลงนามได้เมื่อแพทย์ตรวจครบ (ระบุอ้างอิงทุกกลุ่ม และยืนยันผลตัวอย่างทุกข้อ) · การลงนามผูกกับเนื้อหาที่ตรวจ ถ้าแก้เกณฑ์ ถ้อยคำ พจนานุกรม หรือกฎหลังลงนาม สถานะจะกลับเป็น DRAFT เอง · ระบบบันทึกชื่อผู้ลงนามและวันที่เท่านั้น ไม่ได้ตัดสินความถูกต้องทางคลินิก</p>
+      <div id="signMsg"></div>
+      <div id="signBody"></div>
+      <div class="modal-btns" style="margin-top:14px;"><button class="cancel" onclick="closeSignModal()">ปิด</button></div>
+    </div>
+  </div>
+
+'''
+
+SIGN_JS = r'''    // ===== Sign-off (admin) =====
+    async function signCall(body) {
+      const res = await fetch(API + '/api/admin/signoff', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify(body) });
+      return res.json();
+    }
+    function signMsg(html, bad) { document.getElementById('signMsg').innerHTML = html ? `<div style="margin:8px 0;padding:8px 10px;border-radius:8px;background:${bad ? '#FEE2E2' : '#DCFCE7'};font-size:12.5px;">${html}</div>` : ''; }
+    async function showSignModal() { document.getElementById('signModal').classList.add('show'); await renderSign(); }
+    function closeSignModal() { document.getElementById('signModal').classList.remove('show'); }
+    async function renderSign() {
+      const d = await signCall({ action: 'status' });
+      if (d.error) { signMsg(esc(d.error), true); return; }
+      signMsg('สถานะตอนนี้: <b>' + esc(d.status) + '</b>', !d.state.signed);
+      let h = d.blockers.length ? '<div style="margin-top:8px;"><b>ยังลงนามไม่ได้ เพราะ:</b><br>' + d.blockers.map(b => '✗ ' + esc(b)).join('<br>') + '</div>' : '<div style="margin-top:8px;">✓ เงื่อนไขครบ พร้อมลงนาม</div>';
+      h += `<div style="margin-top:10px;"><input type="text" id="signName" maxlength="60" placeholder="ชื่อผู้ตรวจรับรอง เช่น นพ.สมชาย ใจดี" style="width:100%;padding:8px;"></div>` +
+        `<div style="margin-top:6px;"><input type="text" id="signPhrase" placeholder="พิมพ์ ${esc(d.phrase)} เพื่อยืนยัน" style="width:100%;padding:8px;"></div>` +
+        '<div style="margin-top:8px;"><button class="save" onclick="signDo()">ลงนามรับรอง</button> ' + (d.state.signed || d.state.edited_after ? '<button class="cancel" onclick="signRevoke()">ถอนการลงนาม</button>' : '') + '</div>';
+      if (d.history.length) h += '<div style="margin-top:10px;font-size:12px;color:var(--text-light);">ประวัติ: ' + d.history.map(x => esc(x.date) + ' ' + (x.action === 'sign' ? 'ลงนามโดย ' : 'ถอนโดย ') + esc(x.by)).join(' · ') + '</div>';
+      document.getElementById('signBody').innerHTML = h;
+    }
+    async function signDo() {
+      const d = await signCall({ action: 'sign', name: document.getElementById('signName').value, phrase: document.getElementById('signPhrase').value });
+      if (d.error) { signMsg(esc(d.error), true); return; }
+      await renderSign();
+      if (!d.success) signMsg('❌ ยังไม่ได้ลงนาม:<br>' + d.errors.map(esc).join('<br>'), true);
+    }
+    async function signRevoke() { await signCall({ action: 'revoke' }); await renderSign(); }
+
+'''
