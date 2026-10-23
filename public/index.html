@@ -1,0 +1,2197 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lab Interpreter — แปลผล Lab สำหรับผู้ป่วย (ระบบกฎ ใช้ในเครื่อง)</title>
+  <style>
+    :root {
+      --bg: #F0F4F3;
+      --card: #FFF;
+      --primary: #1A6B5A;
+      --primary-light: #E8F5F1;
+      --primary-hover: #145649;
+      --accent: #C8993A;
+      --accent-light: #FFF8E7;
+      --text: #2C3E3A;
+      --text-light: #6B8078;
+      --border: #D1DDD9;
+      --danger: #C0392B;
+      --success: #27AE60;
+      --shadow: 0 2px 12px rgba(26, 107, 90, 0.08);
+      --radius: 12px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Sarabun', 'Noto Sans Thai', 'Leelawadee UI', 'Thonburi', 'Tahoma', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.7;
+    }
+
+    /* Lock Screen */
+    .lock-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      background: linear-gradient(135deg, #1A6B5A, #0D3D32);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .lock-screen.hidden {
+      display: none;
+    }
+
+    .lock-card {
+      background: white;
+      border-radius: 20px;
+      padding: 40px 36px;
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .lock-card h2 {
+      font-size: 22px;
+      color: var(--primary);
+      margin: 8px 0 4px;
+    }
+
+    .lock-card .sub {
+      font-size: 13px;
+      color: var(--text-light);
+      margin-bottom: 24px;
+    }
+
+    .lock-form {
+      text-align: left;
+    }
+
+    .lock-form label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-light);
+      margin: 12px 0 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .lock-form input {
+      width: 100%;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-family: inherit;
+      font-size: 15px;
+      background: #FAFCFB;
+    }
+
+    .lock-form input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(26, 107, 90, 0.1);
+    }
+
+    .lock-form input.pin-input {
+      font-size: 24px;
+      text-align: center;
+      letter-spacing: 8px;
+      font-weight: 700;
+    }
+
+    .lock-btn {
+      width: 100%;
+      padding: 14px;
+      margin-top: 20px;
+      background: linear-gradient(135deg, var(--primary), #2D8B78);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(26, 107, 90, 0.3);
+    }
+
+    .lock-btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .lock-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .lock-error {
+      color: var(--danger);
+      font-size: 13px;
+      text-align: center;
+      min-height: 20px;
+      margin-top: 10px;
+    }
+
+    .lock-secure {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 16px;
+      font-size: 12px;
+      color: var(--text-light);
+    }
+
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, #1A6B5A 0%, #2D8B78 50%, #1A6B5A 100%);
+      padding: 16px 24px;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 20px rgba(26, 107, 90, 0.25);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header-icon {
+      width: 40px;
+      height: 40px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    .header h1 {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .header .user-info {
+      font-size: 12px;
+      opacity: 0.85;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .hdr-btn {
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: white;
+      padding: 6px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 13px;
+    }
+
+    .hdr-btn:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    .monk-badge {
+      display: none;
+      background: var(--accent);
+      color: white;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 10px;
+    }
+
+    .monk-badge.show {
+      display: inline-block;
+    }
+
+    /* Layout */
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 20px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    @media(max-width:768px) {
+      .container {
+        grid-template-columns: 1fr;
+        padding: 14px;
+      }
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--primary);
+      background: var(--primary-light);
+    }
+
+    .card-body {
+      padding: 18px;
+    }
+
+    /* Forms */
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-light);
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    textarea,
+    select,
+    input[type="text"] {
+      width: 100%;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-family: inherit;
+      font-size: 14px;
+      color: var(--text);
+      background: #FAFCFB;
+      line-height: 1.6;
+    }
+
+    textarea:focus,
+    select:focus,
+    input[type="text"]:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(26, 107, 90, 0.1);
+      background: white;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    textarea.large {
+      min-height: 180px;
+    }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    /* Patterns */
+    .pattern-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    .pattern-option {
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: white;
+    }
+
+    .pattern-option:hover {
+      border-color: var(--primary);
+      background: var(--primary-light);
+    }
+
+    .pattern-option.active {
+      border-color: var(--primary);
+      background: var(--primary-light);
+      box-shadow: 0 0 0 3px rgba(26, 107, 90, 0.1);
+    }
+
+    .pattern-name {
+      font-weight: 700;
+      font-size: 13px;
+      color: var(--primary);
+    }
+
+    .pattern-desc {
+      font-size: 11px;
+      color: var(--text-light);
+      line-height: 1.3;
+    }
+
+    /* Monk Toggle */
+    .monk-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.25s;
+      background: white;
+      user-select: none;
+      margin: 10px 0;
+    }
+
+    .monk-toggle:hover {
+      border-color: var(--accent);
+      background: #FFFDF5;
+    }
+
+    .monk-toggle.active {
+      border-color: var(--accent);
+      background: var(--accent-light);
+      box-shadow: 0 0 0 3px rgba(200, 153, 58, 0.12);
+    }
+
+    .monk-toggle-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .monk-title {
+      font-weight: 700;
+      font-size: 13px;
+      color: #8B6914;
+    }
+
+    .monk-sub {
+      font-size: 11px;
+      color: var(--text-light);
+    }
+
+    .toggle-sw {
+      width: 44px;
+      height: 26px;
+      background: #D1DDD9;
+      border-radius: 13px;
+      position: relative;
+      transition: 0.25s;
+      flex-shrink: 0;
+    }
+
+    .monk-toggle.active .toggle-sw {
+      background: var(--accent);
+    }
+
+    .toggle-knob {
+      width: 20px;
+      height: 20px;
+      background: white;
+      border-radius: 50%;
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      transition: 0.25s;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+    }
+
+    .monk-toggle.active .toggle-knob {
+      transform: translateX(18px);
+    }
+
+    /* Custom Pattern */
+    .custom-editor {
+      display: none;
+      margin-bottom: 10px;
+      padding: 12px;
+      background: #F7FAF9;
+      border-radius: 8px;
+      border: 1px dashed var(--border);
+    }
+
+    .custom-editor.show {
+      display: block;
+    }
+
+    .custom-editor textarea {
+      font-size: 13px;
+      min-height: 120px;
+    }
+
+    .section-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 6px;
+    }
+
+    .section-tag {
+      background: var(--primary);
+      color: white;
+      padding: 2px 8px;
+      border-radius: 16px;
+      font-size: 11px;
+      cursor: pointer;
+      border: none;
+      font-family: inherit;
+    }
+
+    .section-tag:hover {
+      background: var(--primary-hover);
+    }
+
+    /* Notice */
+    .notice {
+      background: #FEF5E7;
+      border: 1px solid #F0C78A;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 12px;
+      color: #8B5E1A;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Buttons */
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), #2D8B78);
+      color: white;
+      border: none;
+      padding: 13px;
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      box-shadow: 0 4px 15px rgba(26, 107, 90, 0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-secondary {
+      background: white;
+      color: var(--primary);
+      border: 2px solid var(--primary);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .btn-secondary:hover {
+      background: var(--primary-light);
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-row .btn-secondary {
+      flex: 1;
+      justify-content: center;
+    }
+
+    .btn-print-big {
+      background: var(--primary) !important;
+      color: white !important;
+      border-color: var(--primary) !important;
+      font-weight: 700;
+      flex: 1.5;
+    }
+
+    /* Review Workflow */
+    .step-banner {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      border-radius: 8px;
+      margin-bottom: 14px;
+      font-size: 18px;
+    }
+
+    .step-title {
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .step-desc {
+      font-size: 11px;
+      opacity: 0.8;
+      margin-top: 1px;
+    }
+
+    .draft-banner {
+      background: #FEF5E7;
+      border: 1.5px solid #F0C78A;
+      color: #8B5E1A;
+    }
+
+    .confirmed-banner {
+      background: #E8F8F0;
+      border: 1.5px solid #7DCEA0;
+      color: #1A6B3C;
+    }
+
+    .edit-area {
+      width: 100%;
+      min-height: 320px;
+      border: 2px solid var(--accent);
+      border-radius: 8px;
+      padding: 14px;
+      font-family: inherit;
+      font-size: 14px;
+      line-height: 1.8;
+      color: var(--text);
+      background: #FFFDF5;
+      resize: vertical;
+    }
+
+    .edit-area:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: white;
+    }
+
+    .confirm-section {
+      margin-top: 14px;
+      padding: 14px;
+      background: #F7FAF9;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+
+    .confirm-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    @media(max-width:768px) {
+      .confirm-row {
+        flex-direction: column;
+      }
+    }
+
+    .btn-confirm {
+      width: 100%;
+      padding: 13px;
+      background: linear-gradient(135deg, #27AE60, #2ECC71);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+    }
+
+    .btn-confirm:hover {
+      transform: translateY(-1px);
+    }
+
+    .confirm-hint {
+      font-size: 11px;
+      color: var(--text-light);
+      text-align: center;
+      margin-top: 6px;
+    }
+
+    .result-text {
+      white-space: pre-wrap;
+      line-height: 1.8;
+      font-size: 14px;
+    }
+
+    /* Loading & Status */
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 40px;
+    }
+
+    .loading.show {
+      display: block;
+    }
+
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 12px;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg)
+      }
+    }
+
+    .result-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 280px;
+      color: var(--text-light);
+      text-align: center;
+      padding: 30px;
+    }
+
+    .result-placeholder .big-icon {
+      font-size: 44px;
+      margin-bottom: 10px;
+      opacity: 0.4;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 4px;
+    }
+
+    .status-dot.ready {
+      background: var(--success);
+    }
+
+    /* Admin Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      backdrop-filter: blur(4px);
+    }
+
+    .modal-overlay.show {
+      display: flex;
+    }
+
+    .modal {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      max-width: 500px;
+      width: 100%;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+    }
+
+    .modal h3 {
+      font-size: 17px;
+      margin-bottom: 6px;
+      color: var(--primary);
+    }
+
+    .modal p {
+      font-size: 12px;
+      color: var(--text-light);
+      margin-bottom: 14px;
+    }
+
+    .modal-btns {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      margin-top: 14px;
+    }
+
+    .modal-btns button {
+      padding: 8px 18px;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+    }
+
+    .modal-btns .cancel {
+      background: #EEF2F0;
+      color: var(--text);
+    }
+
+    .modal-btns .save {
+      background: var(--primary);
+      color: white;
+    }
+
+    .user-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin: 10px 0;
+    }
+
+    .user-table th {
+      background: var(--primary-light);
+      color: var(--primary);
+      padding: 8px;
+      text-align: left;
+      font-size: 12px;
+    }
+
+    .user-table td {
+      padding: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .user-table .del-btn {
+      color: var(--danger);
+      cursor: pointer;
+      background: none;
+      border: none;
+      font-size: 12px;
+      font-family: inherit;
+      text-decoration: underline;
+    }
+
+    /* Stats Modal */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    @media(max-width:500px) {
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .stat-card {
+      background: var(--primary-light);
+      border-radius: 10px;
+      padding: 14px;
+      text-align: center;
+    }
+
+    .stat-number {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-light);
+      margin-top: 2px;
+    }
+
+    .stats-section {
+      margin-bottom: 16px;
+    }
+
+    .stats-section h4 {
+      font-size: 14px;
+      color: var(--primary);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .stats-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .stats-table th {
+      background: var(--primary-light);
+      color: var(--primary);
+      padding: 6px 10px;
+      text-align: left;
+      font-size: 11px;
+      text-transform: uppercase;
+    }
+
+    .stats-table td {
+      padding: 6px 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .stats-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .stats-empty {
+      text-align: center;
+      color: var(--text-light);
+      font-size: 13px;
+      padding: 12px;
+    }
+
+    .clear-section {
+      margin-top: 16px;
+      padding: 14px;
+      background: #FEF5E7;
+      border: 1px solid #F0C78A;
+      border-radius: 10px;
+    }
+
+    .clear-section h4 {
+      font-size: 13px;
+      color: #8B5E1A;
+      margin-bottom: 10px;
+    }
+
+    .clear-btns {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-clear {
+      flex: 1;
+      padding: 8px 12px;
+      border: 1.5px solid var(--danger);
+      background: white;
+      color: var(--danger);
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-clear:hover {
+      background: #FDEDEC;
+    }
+
+    /* Knowledge Base */
+    .kb-item {
+      padding: 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 8px;
+      background: #FAFCFB;
+    }
+
+    .kb-item.inactive {
+      opacity: 0.5;
+    }
+
+    .kb-item-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .kb-item-title {
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--primary);
+    }
+
+    .kb-item-actions {
+      display: flex;
+      gap: 4px;
+    }
+
+    .kb-item-actions button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 13px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: inherit;
+    }
+
+    .kb-item-actions button:hover {
+      background: var(--primary-light);
+    }
+
+    .kb-item-content {
+      font-size: 12px;
+      color: var(--text-light);
+      white-space: pre-wrap;
+      line-height: 1.5;
+      max-height: 80px;
+      overflow: hidden;
+    }
+
+    .kb-item-meta {
+      font-size: 10px;
+      color: #aaa;
+      margin-top: 4px;
+    }
+
+    .kb-form {
+      margin-top: 12px;
+      padding: 12px;
+      background: var(--primary-light);
+      border-radius: 8px;
+    }
+
+    .kb-form input,
+    .kb-form textarea {
+      width: 100%;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-family: inherit;
+      font-size: 13px;
+      margin-bottom: 8px;
+      background: white;
+    }
+
+    .kb-form textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    /* Print */
+    /* Print Styles */
+    @media print {
+      @page {
+        margin: 18mm 15mm 18mm 15mm;
+        size: A4 portrait;
+      }
+
+      * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+
+      body {
+        background: white;
+        font-size: 13pt;
+        line-height: 1.8;
+        color: #222;
+      }
+
+      .header,
+      .input-panel,
+      .modal-overlay,
+      .btn-row,
+      .no-print,
+      .lock-screen,
+      #reviewStep,
+      .step-banner,
+      .result-placeholder,
+      .loading,
+      .card-header {
+        display: none !important;
+      }
+
+      .container {
+        display: block;
+        max-width: 100%;
+        padding: 0;
+      }
+
+      .card {
+        box-shadow: none;
+        border: none;
+      }
+
+      .card-body {
+        padding: 0;
+      }
+
+      /* Print Header */
+      .print-header {
+        display: block !important;
+        text-align: center;
+        padding: 0 0 16pt 0;
+        margin-bottom: 16pt;
+        border-bottom: 2.5pt solid #1A6B5A;
+      }
+
+      .print-logo-row {
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        gap: 12pt;
+        margin-bottom: 6pt;
+      }
+
+      .print-logo-icon {
+        font-size: 32pt;
+      }
+
+      .print-logo-text {
+        text-align: left;
+      }
+
+      .print-logo-text h2 {
+        font-size: 18pt;
+        font-weight: 700;
+        color: #1A6B5A;
+        margin: 0;
+        line-height: 1.2;
+      }
+
+      .print-logo-text .print-org {
+        font-size: 10pt;
+        color: #555;
+        margin: 0;
+      }
+
+      .print-title-main {
+        font-size: 16pt;
+        font-weight: 700;
+        color: #222;
+        margin: 10pt 0 4pt;
+      }
+
+      .print-subtitle {
+        font-size: 10pt;
+        color: #666;
+        margin: 0;
+      }
+
+      .print-date-line {
+        font-size: 9pt;
+        color: #888;
+        margin-top: 6pt;
+      }
+
+      /* Result Content */
+      .result-text {
+        font-size: 13pt;
+        line-height: 2;
+        color: #222;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+      }
+
+      /* Print Footer */
+      .print-footer {
+        display: block !important;
+        margin-top: 24pt;
+        padding-top: 12pt;
+        border-top: 1.5pt solid #1A6B5A;
+      }
+
+      .print-footer-grid {
+        display: flex !important;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16pt;
+      }
+
+      .print-footer-left {
+        text-align: left;
+      }
+
+      .print-footer-right {
+        text-align: right;
+      }
+
+      .print-reviewer-label {
+        font-size: 9pt;
+        color: #888;
+        text-transform: uppercase;
+        letter-spacing: 0.5pt;
+      }
+
+      .print-reviewer-name {
+        font-size: 12pt;
+        font-weight: 700;
+        color: #222;
+        margin-top: 2pt;
+      }
+
+      .print-disclaimer {
+        margin-top: 14pt;
+        padding: 10pt 14pt;
+        background: #f8f8f8;
+        border: 1pt solid #ddd;
+        border-radius: 6pt;
+        font-size: 9pt;
+        color: #666;
+        text-align: center;
+        line-height: 1.6;
+      }
+
+      .print-hospital-footer {
+        margin-top: 10pt;
+        text-align: center;
+        font-size: 8pt;
+        color: #aaa;
+      }
+    }
+
+    .print-header,
+    .print-footer {
+      display: none;
+    }
+
+    .print-logo-row,
+    .print-footer-grid {
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ===== LOGIN SCREEN ===== -->
+  <div class="lock-screen" id="lockScreen">
+    <div class="lock-card">
+      <div style="font-size:44px;">🔬</div>
+      <h2>Lab Interpreter</h2>
+      <p class="sub">แปลผล Lab เป็นคำอธิบายสำหรับผู้ป่วย</p>
+      <div class="lock-form">
+        <label>ชื่อผู้ใช้</label>
+        <input type="text" id="loginUser" placeholder="เช่น admin, nurse01" autocomplete="username">
+        <label>PIN</label>
+        <input type="password" id="loginPin" class="pin-input" placeholder="••••" maxlength="8" inputmode="numeric"
+          onkeydown="if(event.key==='Enter')doLogin()" autocomplete="current-password">
+        <button class="lock-btn" onclick="doLogin()" id="loginBtn">🔓 เข้าใช้งาน</button>
+        <div class="lock-error" id="loginError"></div>
+        <div class="lock-secure" style="flex-direction:column;gap:2px;">
+          <div>พัฒนาโดย อายุรกรรม โรงพยาบาลสงฆ์</div>
+          <div style="font-size:11px;opacity:0.7;">© 2026 directed by Uradev</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== HEADER ===== -->
+  <div class="header">
+    <div class="header-left">
+      <div class="header-icon">🔬</div>
+      <div>
+        <h1>Lab Interpreter</h1>
+        <div style="font-size:10px;opacity:0.7;margin-top:1px;">พัฒนาโดย อายุรกรรม โรงพยาบาลสงฆ์</div>
+        <div class="user-info" id="userInfo"></div>
+      </div>
+    </div>
+    <div class="header-right">
+      <span class="monk-badge" id="monkBadge">🙏 ภาษาสงฆ์</span>
+      <button class="hdr-btn" onclick="showStatsModal()" id="statsBtn" style="display:none">📊 สถิติ</button>
+      <button class="hdr-btn" onclick="showLearnModal()" id="learnBtn" style="display:none">🧠 เรียนรู้</button>
+      <button class="hdr-btn" onclick="showGoldenModal()" id="goldenBtn" style="display:none">✅ ตัวอย่าง</button>
+      <button class="hdr-btn" onclick="showTargetsModal()" id="targetsBtn" style="display:none">🎯 เกณฑ์</button>
+      <button class="hdr-btn" onclick="showRulesModal()" id="rulesBtn" style="display:none">📐 กฎ</button>
+      <button class="hdr-btn" onclick="showAdminModal()" id="adminBtn" style="display:none">👥 จัดการผู้ใช้</button>
+      <button class="hdr-btn" onclick="doLogout()">🔒 ออกจากระบบ</button>
+    </div>
+  </div>
+
+  <!-- ===== RULES MODAL (admin) ===== -->
+  <div class="modal-overlay" id="rulesModal">
+    <div class="modal" style="max-width:820px;max-height:92vh;overflow:auto;">
+      <h3>📐 กฎที่แพทย์เพิ่ม/ปิดเอง</h3>
+      <p style="font-size:12.5px;">กฎที่นี่ใช้กับทุกคนที่ใช้เครื่องนี้ · ระบบตรวจก่อนบันทึกทุกครั้ง กฎที่ไม่ผ่านจะไม่ถูกบันทึก · ข้อความถึงผู้ป่วย <b>ห้ามมีตัวเลข</b> ให้แทรกค่าด้วย {ชื่อค่า} เช่น {LDL}</p>
+      <div id="rulesMsg"></div>
+      <div id="rulesBody"></div>
+      <hr style="margin:14px 0;border:none;border-top:1px solid var(--border);">
+      <h3 style="font-size:14px;">🧪 ลองกับบันทึกตัวอย่าง (ยังไม่บันทึกกฎ ไม่เก็บบันทึก)</h3>
+      <textarea id="rtNote" spellcheck="false" style="width:100%;min-height:90px;margin-top:6px;font-family:inherit;" placeholder="DM : HbA1c 9&#10;DLP : LDL 170"></textarea>
+      <div style="display:flex;gap:8px;margin-top:6px;align-items:center;">
+        <input type="text" id="rtAge" inputmode="numeric" maxlength="3" placeholder="อายุ" style="width:80px;">
+        <select id="rtSex" style="padding:8px;border:1.5px solid var(--border);border-radius:8px;"><option value="">เพศ ไม่ระบุ</option><option value="M">ชาย</option><option value="F">หญิง</option></select>
+        <button class="save" onclick="rulesTry()">ลอง</button>
+      </div>
+      <div id="rtOut" style="margin-top:8px;font-size:12.5px;line-height:1.6;white-space:pre-wrap;"></div>
+      <div class="modal-btns" style="margin-top:14px;">
+        <button class="cancel" onclick="closeRulesModal()">ปิด</button>
+        <button class="save" onclick="rulesSave()">💾 บันทึกกฎทั้งหมด</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TARGETS MODAL (admin) ===== -->
+  <div class="modal-overlay" id="targetsModal">
+    <div class="modal" style="max-width:820px;max-height:92vh;overflow:auto;">
+      <h3>🎯 เกณฑ์และค่าเป้าหมาย</h3>
+      <p style="font-size:12.5px;">แก้ตัวเลขเกณฑ์ที่กฎมาตรฐานใช้ · มีผลกับทุกคนทันที · ระบบตรวจลำดับค่าก่อนบันทึก (เช่น G1 > G2 > G3a) ถ้าไม่ผ่านจะไม่บันทึกอะไรเลย · ช่อง "อ้างอิง" ควรใส่ฉบับแนวทางที่ใช้ แล้วติ๊กว่าอ้างอิงแล้ว</p>
+      <div id="targetsMsg"></div>
+      <div id="targetsBody"></div>
+      <div class="modal-btns" style="margin-top:14px;">
+        <button class="cancel" onclick="closeTargetsModal()">ปิด</button>
+        <button class="save" onclick="targetsSave()">💾 บันทึกเกณฑ์ที่แก้</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== GOLDEN CASES MODAL (admin) ===== -->
+  <div class="modal-overlay" id="goldenModal">
+    <div class="modal" style="max-width:820px;max-height:92vh;overflow:auto;">
+      <h3>✅ บันทึกตัวอย่างสำหรับตรวจผลกระทบ</h3>
+      <p style="font-size:12.5px;">ก่อนบันทึกการแก้เกณฑ์หรือกฎ ระบบจะรันตัวอย่างเหล่านี้ แล้วบอกว่าผลเปลี่ยนตรงไหน · ติ๊ก "ยืนยันว่าถูก" เมื่อแพทย์ตรวจผลของตัวอย่างนั้นแล้ว (ถ้าการแก้ครั้งหน้าทำให้ผลเปลี่ยน จะแจ้งเป็นพิเศษ) · <b style="color:#B91C1C">ห้ามใส่ข้อมูลผู้ป่วยจริง</b> ใช้ตัวอย่างสมมติเท่านั้น</p>
+      <div id="goldenMsg"></div>
+      <div style="border:1.5px solid var(--border);border-radius:10px;padding:8px 12px;">
+        <b style="font-size:13px;">เพิ่มตัวอย่างใหม่ (สมมติ)</b>
+        <textarea id="gcNote" spellcheck="false" style="width:100%;min-height:70px;margin-top:6px;font-family:inherit;" placeholder="DM : HbA1c 7.4"></textarea>
+        <div style="display:flex;gap:8px;margin-top:6px;align-items:center;">
+          <input type="text" id="gcAge" inputmode="numeric" maxlength="3" placeholder="อายุ" style="width:80px;">
+          <select id="gcSex" style="padding:8px;border:1.5px solid var(--border);border-radius:8px;"><option value="">เพศ ไม่ระบุ</option><option value="M">ชาย</option><option value="F">หญิง</option></select>
+          <button class="save" onclick="goldenAdd()">เพิ่ม</button>
+        </div>
+      </div>
+      <div id="goldenBody"></div>
+      <div class="modal-btns" style="margin-top:14px;"><button class="cancel" onclick="closeGoldenModal()">ปิด</button></div>
+    </div>
+  </div>
+
+  <!-- ===== LEARNING LOG MODAL (admin) ===== -->
+  <div class="modal-overlay" id="learnModal">
+    <div class="modal" style="max-width:700px;max-height:92vh;overflow:auto;">
+      <h3>🧠 เก็บตัวอย่างเพื่อให้ระบบเรียนรู้ตัวย่อ</h3>
+      <p style="font-size:12.5px;">ปิดอยู่เป็นค่าตั้งต้น · เมื่อเปิด แพทย์จะเห็นปุ่ม "บันทึกตัวอย่างนี้เพื่อปรับปรุง" ในหน้าผลลัพธ์ และเลือกเก็บเป็นรายเคส · ที่เก็บคือ <b>เฉพาะคำย่อ/ตัวเลข/ชื่อบรรทัดโรค</b> ไม่เก็บข้อความบันทึก อายุ เพศ วันที่ ชื่อผู้ใช้ · ข้อมูลนี้มาจากผู้ป่วย ควรได้รับอนุญาตจาก DPO ของ รพ. ก่อนเปิดใช้</p>
+      <div id="learnAdminMsg"></div>
+      <label style="font-size:13px;"><input type="checkbox" id="learnToggle" style="width:auto;" onchange="learnAdminSet(this.checked)"> เปิดการเก็บตัวอย่าง</label>
+      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="save" onclick="learnAdminExport()">ดูข้อมูลที่เก็บไว้ (สำเนาไปใช้กับ learn_terms.py ได้)</button>
+        <button class="cancel" onclick="learnAdminClear()">ล้างทั้งหมด</button>
+      </div>
+      <textarea id="learnOut" readonly spellcheck="false" style="display:none;width:100%;min-height:160px;margin-top:10px;font-family:monospace;font-size:11px;"></textarea>
+      <div class="modal-btns" style="margin-top:14px;"><button class="cancel" onclick="closeLearnModal()">ปิด</button></div>
+    </div>
+  </div>
+
+  <!-- ===== ADMIN MODAL ===== -->
+  <div class="modal-overlay" id="adminModal">
+    <div class="modal">
+      <h3>👥 จัดการผู้ใช้งาน</h3>
+      <p>เพิ่ม/ลบผู้ใช้ รีเซ็ต PIN (เฉพาะ Admin)</p>
+      <div id="userList"></div>
+      <hr style="margin:14px 0;border:none;border-top:1px solid var(--border);">
+      <h3 style="font-size:14px;">➕ เพิ่มผู้ใช้ใหม่</h3>
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+        <input type="text" id="newUsername" placeholder="ชื่อผู้ใช้" style="flex:1;min-width:100px;">
+        <input type="text" id="newDisplayName" placeholder="ชื่อแสดง เช่น พญ.สมศรี" style="flex:1;min-width:120px;">
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px;">
+        <input type="text" id="newPin" placeholder="PIN (6+ หลัก)" style="flex:1;">
+        <select id="newRole"
+          style="width:120px;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;">
+          <option value="doctor">แพทย์</option>
+          <option value="nurse">พยาบาล</option>
+          <option value="pharmacist">เภสัชกร</option>
+          <option value="staff">เจ้าหน้าที่</option>
+        </select>
+      </div>
+      <div class="modal-btns" style="margin-top:12px;">
+        <button class="cancel" onclick="closeAdminModal()">ปิด</button>
+        <button class="save" onclick="addUser()">เพิ่มผู้ใช้</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== STATS MODAL ===== -->
+  <div class="modal-overlay" id="statsModal">
+    <div class="modal" style="max-width:550px;">
+      <h3>📊 สถิติการใช้งาน</h3>
+      <p>ข้อมูลย้อนหลัง 30 วัน (auto-clean อัตโนมัติ)</p>
+      <div id="statsContent">
+        <div style="text-align:center;padding:20px;color:var(--text-light);">กำลังโหลด...</div>
+      </div>
+      <div class="clear-section">
+        <h4>⚠️ ล้างข้อมูล</h4>
+        <div class="clear-btns">
+          <button class="btn-clear" onclick="clearSessions()">🗑️ ล้าง Sessions</button>
+          <button class="btn-clear" onclick="clearLogs()">🗑️ ล้าง Usage Logs</button>
+        </div>
+      </div>
+      <div class="modal-btns">
+        <button class="cancel" onclick="closeStatsModal()">ปิด</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MAIN CONTENT ===== -->
+  <div class="container">
+    <div class="input-panel">
+      <!-- Pattern Card -->
+      <div class="card" style="margin-bottom:16px;">
+        <div class="card-header">📋 รูปแบบการแปลผล</div>
+        <div class="card-body">
+          <div class="pattern-grid">
+            <div class="pattern-option active" data-pattern="standard" onclick="selectPattern(this)">
+              <div class="pattern-name">📄 มาตรฐาน</div>
+              <div class="pattern-desc">สรุป → อธิบาย Lab → คำแนะนำ → สัญญาณอันตราย</div>
+            </div>
+            <div class="pattern-option" data-pattern="simple" onclick="selectPattern(this)">
+              <div class="pattern-name">🟢 เรียบง่าย</div>
+              <div class="pattern-desc">สั้นกระชับ ภาษาง่าย ≤200 คำ</div>
+            </div>
+            <div class="pattern-option" data-pattern="detailed" onclick="selectPattern(this)">
+              <div class="pattern-name">📊 ละเอียด</div>
+              <div class="pattern-desc">เทียบค่าปกติ + อาหาร + ยา + ออกกำลังกาย</div>
+            </div>
+          </div>
+          <!-- Monk Toggle -->
+          <div class="monk-toggle" id="monkToggle" onclick="toggleMonk()">
+            <div class="monk-toggle-left">
+              <span style="font-size:20px;">🙏</span>
+              <div>
+                <div class="monk-title">สำหรับพระสงฆ์</div>
+                <div class="monk-sub">ฉัน ภัตตาหาร อาพาธ จำวัด เดินจงกรม</div>
+              </div>
+            </div>
+            <div class="toggle-sw">
+              <div class="toggle-knob"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Patient Data Card -->
+      <div class="card">
+        <div class="card-header">🏥 ข้อมูลผู้ป่วย (ไม่ระบุชื่อ)</div>
+        <div class="card-body">
+          <div class="notice">⚠️ ห้ามใส่ชื่อ-นามสกุล, HN หรือข้อมูลระบุตัวตนผู้ป่วย · ข้อมูลไม่ถูกบันทึกและไม่ออกจากเครื่องนี้</div>
+          <div class="form-group" style="display:flex;gap:10px;">
+            <div style="flex:1;">
+              <label>อายุ (ปี) <span style="font-weight:400;color:var(--text-light)">ใช้ตรวจ eGFR</span></label>
+              <input type="text" inputmode="numeric" maxlength="3" id="ptAge" placeholder="เช่น 60">
+            </div>
+            <div style="width:140px;">
+              <label>เพศ</label>
+              <select id="ptSex" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;">
+                <option value="">ไม่ระบุ</option><option value="M">ชาย</option><option value="F">หญิง</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Thai CV risk (% ใน 10 ปี) <span style="font-weight:400;color:var(--text-light)">ไม่บังคับ · กรอกจากเครื่องมือของรามาธิบดีเอง ระบบไม่คำนวณและไม่ต้องใช้อินเทอร์เน็ต</span></label>
+            <input type="text" inputmode="decimal" maxlength="5" id="ptTcvr" placeholder="เช่น 12.5" style="width:140px;">
+          </div>
+          <div class="form-group">
+            <label>บันทึก OPD (รูปแบบของแพทย์ผู้ใช้)</label>
+            <textarea id="labValues" class="large" spellcheck="false"
+              placeholder="DM : FBS 120->130->110 HbA1C 12->10->6.5%&#10;HT : BP 150/90mmHg HMBP 120/80mmHg&#10;Obesity : BW 110-->100Kg BMI 31&#10;CKD : Cr 1.5 GFR 54&#10;22/10/69 : มีเวียนศีรษะ ฉันได้น้อย ยังสูบบุหรี่อยู่"></textarea>
+            <div style="font-size:11px;color:var(--text-light);margin-top:4px;">ค่าซ้ายสุด = เก่าสุด · ขวาสุด = ล่าสุด · ระบบไม่เดา ส่วนที่ไม่เข้าใจจะแสดงให้ตรวจสอบ</div>
+          </div>
+          <button class="btn-primary" id="generateBtn" onclick="generate()">🔬 แปลผล Lab</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Result Panel -->
+    <div>
+      <div class="card">
+        <div class="card-header">
+          📝 ผลการแปล
+          <span style="margin-left:auto;font-size:12px;font-weight:400;" id="statusBar">
+            <span class="status-dot ready"></span>พร้อมใช้
+          </span>
+        </div>
+        <div class="card-body">
+          <div class="print-header">
+            <div class="print-logo-row">
+              <span class="print-logo-icon">🔬</span>
+              <div class="print-logo-text">
+                <h2>Lab Interpreter</h2>
+                <p class="print-org">อายุรกรรม โรงพยาบาลสงฆ์</p>
+              </div>
+            </div>
+            <div class="print-title-main" id="printTitle">🩺 คำอธิบายผลตรวจเลือดของท่าน</div>
+            <p class="print-subtitle" id="printSubtitle">จัดทำโดยระบบ Lab Interpreter — กรุณาปรึกษาแพทย์เพิ่มเติม</p>
+            <div class="print-date-line" id="printDateLine"></div>
+          </div>
+          <div class="result-placeholder" id="placeholder">
+            <div class="big-icon">🩺</div>
+            <div style="font-size:14px;font-weight:600;">พร้อมแปลผล</div>
+            <div style="font-size:12px;">ใส่บันทึก OPD → กดแปลผล</div>
+          </div>
+          <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <div style="color:var(--text-light);font-size:13px;">กำลังอ่านบันทึก...<br><span
+                style="font-size:11px;opacity:0.7;">ระบบกฎ ใช้เวลาไม่ถึงวินาที</span></div>
+          </div>
+
+          <!-- Step 1: Review & Edit -->
+          <div id="reviewStep" style="display:none;">
+            <div class="step-banner draft-banner">
+              <span>✏️</span>
+              <div>
+                <div class="step-title">ฉบับร่าง — รอตรวจสอบ</div>
+                <div class="step-desc">ตรวจสอบและแก้ไขก่อนยืนยัน</div>
+              </div>
+            </div>
+            <div id="draftWarn" class="no-print" style="display:none;background:#FFF4E5;border:1.5px solid #F0B35A;border-radius:10px;padding:10px 12px;margin:10px 0;font-size:12.5px;line-height:1.6;"></div>
+            <div id="learnBox" class="no-print" style="display:none;margin:10px 0;border:1.5px dashed var(--border);border-radius:10px;padding:8px 12px;font-size:12.5px;"></div>
+            <details id="readBox" class="no-print" open style="margin:10px 0;border:1.5px solid var(--border);border-radius:10px;padding:8px 12px;">
+              <summary style="cursor:pointer;font-weight:600;font-size:13px;">🔎 สิ่งที่ระบบอ่านได้จากบันทึก (ตรวจให้ตรงกับที่เขียนก่อนยืนยัน)</summary>
+              <div id="readTable" style="margin-top:8px;font-size:12.5px;line-height:1.7;"></div>
+            </details>
+            <details id="clinBox" class="no-print" open style="margin:10px 0;border:1.5px solid #C9D8F0;background:#F4F8FE;border-radius:10px;padding:8px 12px;">
+              <summary style="cursor:pointer;font-weight:600;font-size:13px;">🩺 ข้อสังเกตสำหรับแพทย์ (ไม่พิมพ์ให้ผู้ป่วย)</summary>
+              <div id="clinList" style="margin-top:8px;font-size:12.5px;line-height:1.7;"></div>
+            </details>
+            <textarea class="edit-area" id="editArea" spellcheck="false"></textarea>
+            <div class="confirm-section">
+              <div class="confirm-row">
+                <div class="form-group" style="flex:1;margin-bottom:0;">
+                  <label>ผู้ตรวจสอบ</label>
+                  <input type="text" id="reviewerName" placeholder="เช่น พญ.สมศรี">
+                </div>
+                <div class="form-group" style="width:140px;margin-bottom:0;">
+                  <label>ตำแหน่ง</label>
+                  <select id="reviewerRole">
+                    <option>แพทย์</option>
+                    <option>พยาบาล</option>
+                    <option>เภสัชกร</option>
+                    <option>อื่นๆ</option>
+                  </select>
+                </div>
+              </div>
+              <button class="btn-confirm" onclick="confirmResult()">✅ ยืนยันผลการแปล</button>
+              <div class="confirm-hint">* ระบุชื่อผู้ตรวจสอบก่อนยืนยัน</div>
+            </div>
+          </div>
+
+          <!-- Step 2: Confirmed -->
+          <div id="confirmedStep" style="display:none;">
+            <div class="step-banner confirmed-banner">
+              <span>✅</span>
+              <div>
+                <div class="step-title">ยืนยันแล้ว — พร้อมพิมพ์</div>
+                <div class="step-desc" id="confirmedInfo"></div>
+              </div>
+            </div>
+            <div class="result-text" id="resultText"></div>
+          </div>
+
+          <div class="print-footer">
+            <div class="print-footer-grid">
+              <div class="print-footer-left">
+                <div class="print-reviewer-label">ตรวจสอบโดย</div>
+                <div class="print-reviewer-name" id="printReviewer"></div>
+              </div>
+              <div class="print-footer-right">
+                <div class="print-reviewer-label">วันที่พิมพ์</div>
+                <div class="print-reviewer-name" id="printDate"></div>
+              </div>
+            </div>
+            <div class="print-disclaimer">
+              ⚠️ เอกสารนี้สร้างจากกฎที่แพทย์กำหนดและตรวจสอบโดยบุคลากรทางการแพทย์ เพื่อช่วยอธิบายผลตรวจเบื้องต้น <strong>ไม่ใช่การวินิจฉัยโรค</strong><br>
+              กรุณาปฏิบัติตามคำแนะนำของแพทย์ผู้ดูแลเสมอ
+            </div>
+            <div class="print-hospital-footer">
+              อายุรกรรม โรงพยาบาลสงฆ์ • Lab Interpreter System • © 2026 directed by Uradev
+            </div>
+          </div>
+        </div>
+
+        <div class="btn-row no-print" style="padding:0 18px 18px;display:none;" id="reviewBtns">
+          <button class="btn-secondary" onclick="generate()">🔄 แปลผลใหม่</button>
+          <button class="btn-secondary" onclick="clearAll()">🗑️ ล้าง</button>
+        </div>
+        <div class="btn-row no-print" style="padding:0 18px 18px;display:none;" id="confirmedBtns">
+          <button class="btn-secondary btn-print-big" onclick="printResult()">🖨️ Print ใบให้ผู้ป่วย</button>
+          <button class="btn-secondary" onclick="copyResult()">📋 Copy</button>
+          <button class="btn-secondary" onclick="backToEdit()">✏️ แก้ไข</button>
+          <button class="btn-secondary" onclick="clearAll()">🗑️ ล้าง</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ===== State =====
+    let token = sessionStorage.getItem('lab_token') || '';
+    let currentUser = null;
+    let currentPattern = 'standard';
+    let monkMode = false;
+
+    const API = ''; // same origin, e.g. /api/login
+
+    // ===== Auth =====
+    async function doLogin() {
+      const user = document.getElementById('loginUser').value.trim();
+      const pin = document.getElementById('loginPin').value.trim();
+      const errEl = document.getElementById('loginError');
+      const btn = document.getElementById('loginBtn');
+      if (!user || !pin) { errEl.textContent = 'กรุณาใส่ชื่อผู้ใช้และ PIN'; return; }
+
+      btn.disabled = true; btn.textContent = '⏳ กำลังเข้าสู่ระบบ...';
+      try {
+        const res = await fetch(API + '/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: user, pin })
+        });
+        const data = await res.json();
+        if (!res.ok) { errEl.textContent = data.error || 'เข้าสู่ระบบไม่สำเร็จ'; return; }
+
+        token = data.token;
+        currentUser = data.user;
+        sessionStorage.setItem('lab_token', token);
+        unlockUI();
+      } catch (e) {
+        errEl.textContent = 'เชื่อมต่อ server ไม่ได้';
+      } finally {
+        btn.disabled = false; btn.textContent = '🔓 เข้าใช้งาน';
+      }
+    }
+
+    function unlockUI() {
+      document.getElementById('lockScreen').classList.add('hidden');
+      document.getElementById('userInfo').textContent = `${currentUser.displayName} (${currentUser.role})`;
+      // Auto-fill reviewer name
+      document.getElementById('reviewerName').value = currentUser.displayName;
+      const roleMap = { doctor: 'แพทย์', nurse: 'พยาบาล', pharmacist: 'เภสัชกร', admin: 'แพทย์', staff: 'อื่นๆ' };
+      const sel = document.getElementById('reviewerRole');
+      for (let i = 0; i < sel.options.length; i++) {
+        if (sel.options[i].value === (roleMap[currentUser.role] || 'อื่นๆ')) { sel.selectedIndex = i; break; }
+      }
+      if (currentUser.isAdmin) {
+        document.getElementById('adminBtn').style.display = 'inline-flex'; document.getElementById('rulesBtn').style.display = 'inline-flex'; document.getElementById('targetsBtn').style.display = 'inline-flex'; document.getElementById('goldenBtn').style.display = 'inline-flex'; document.getElementById('learnBtn').style.display = 'inline-flex';
+        document.getElementById('statsBtn').style.display = 'inline-flex';
+      }
+    }
+
+    async function doLogout() {
+      try { await fetch(API + '/api/logout', { method: 'POST', headers: { Authorization: 'Bearer ' + token } }); } catch { }
+      token = '';
+      currentUser = null;
+      sessionStorage.removeItem('lab_token');
+      document.getElementById('lockScreen').classList.remove('hidden');
+      document.getElementById('loginPin').value = '';
+      document.getElementById('loginError').textContent = '';
+      document.getElementById('adminBtn').style.display = 'none'; document.getElementById('rulesBtn').style.display = 'none'; document.getElementById('targetsBtn').style.display = 'none'; document.getElementById('goldenBtn').style.display = 'none'; document.getElementById('learnBtn').style.display = 'none';
+      document.getElementById('statsBtn').style.display = 'none';
+    }
+
+    // Check existing session on load
+    async function checkSession() {
+      if (!token) return;
+      try {
+        const res = await fetch(API + '/api/me', { headers: { Authorization: 'Bearer ' + token } });
+        if (res.ok) {
+          const data = await res.json();
+          currentUser = data.user;
+          unlockUI();
+        } else {
+          sessionStorage.removeItem('lab_token');
+          token = '';
+        }
+      } catch { /* server down, show login */ }
+    }
+
+    // ===== Rule editor (admin) =====
+    let RE = null;                                   // { data, builtin, params, concepts, problems, form, rows, join, editing }
+    const OPS = ['<', '<=', '>', '>=', '==', '!='];
+    const LEVEL_TH = { ok: 'ดี (ok)', attention: 'ควรระวัง (attention)', alert: 'แจ้งเตือน (alert)', info: 'เฉพาะแพทย์ (info)' };
+
+    async function rulesCall(body) {
+      const res = await fetch(API + '/api/admin/rules', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify(body) });
+      return res.json();
+    }
+    function rulesMsg(html, bad) { document.getElementById('rulesMsg').innerHTML = html ? `<div style="margin:8px 0;padding:8px 10px;border-radius:8px;background:${bad ? '#FEE2E2' : '#DCFCE7'};font-size:12.5px;">${html}</div>` : ''; }
+
+    async function showRulesModal() {
+      document.getElementById('rulesModal').classList.add('show');
+      const d = await rulesCall({ action: 'get' });
+      if (d.error) { rulesMsg(esc(d.error), true); return; }
+      RE = { ...d, form: null, rows: [], join: 'all', editing: -1 };
+      rulesMsg(d.errors.length ? '⚠ พบปัญหาในไฟล์กฎที่มีอยู่:<br>' + d.errors.map(esc).join('<br>') : '', true);
+      renderRules();
+    }
+    function closeRulesModal() { document.getElementById('rulesModal').classList.remove('show'); }
+
+    function flatRows(w) {                           // rule condition -> form rows, or null if the rule is too nested for the form
+      const leaf = c => {
+        let not = false;
+        if (c && c.not) { not = true; c = c.not; }
+        if (!c || c.all || c.any || c.not) return null;
+        if (c.param !== undefined) return { kind: 'param', not, param: c.param, field: c.field || '', op: c.op, value: c.value };
+        if (c.problem !== undefined) return { kind: 'problem', not, problem: c.problem };
+        if (c.concept !== undefined) return { kind: 'concept', not, concept: c.concept, is: c.is || 'present' };
+        if (c.patient === 'age') return { kind: 'age', not, op: c.op, value: c.value };
+        if (c.patient === 'sex') return { kind: 'sex', not, op: c.op, value: c.value };
+        return null;
+      };
+      const list = w.all || w.any || [w];
+      const rows = list.map(leaf);
+      return rows.includes(null) ? null : { rows, join: w.any ? 'any' : 'all' };
+    }
+    function rowToCond(r) {
+      let c;
+      if (r.kind === 'param') { c = { param: r.param, op: r.op, value: Number(r.value) }; if (r.field) c.field = r.field; }
+      else if (r.kind === 'problem') c = { problem: r.problem };
+      else if (r.kind === 'concept') c = { concept: r.concept, is: r.is };
+      else if (r.kind === 'age') c = { patient: 'age', op: r.op, value: Number(r.value) };
+      else c = { patient: 'sex', op: r.op === '!=' ? '!=' : '==', value: r.value };
+      return r.not ? { not: c } : c;
+    }
+    function sel(opts, cur, expr) { return `<select onchange="${expr}" style="width:auto;min-width:80px;padding:6px;border:1.5px solid var(--border);border-radius:6px;">` + opts.map(o => `<option value="${esc(o[0])}"${o[0] === cur ? ' selected' : ''}>${esc(o[1])}</option>`).join('') + '</select>'; }
+
+    function renderRules() {
+      const E = RE.data.rules || [];
+      let h = '<h3 style="font-size:14px;">กฎที่เพิ่มเอง</h3>';
+      h += E.length ? '<table class="user-table"><tr><th>เปิด</th><th>รหัส</th><th>เงื่อนไข</th><th>ระดับ</th><th></th></tr>' + E.map((r, i) =>
+        `<tr><td><input type="checkbox" ${r.enabled === false ? '' : 'checked'} onchange="ruleToggle(${i})"></td><td>${esc(r.id)}</td><td style="font-size:12px;">${esc(r._describe || '')}</td><td>${esc(r.level)}</td>` +
+        `<td><button class="del-btn" onclick="ruleEdit(${i})">แก้</button> <button class="del-btn" onclick="ruleDelete(${i})">ลบ</button></td></tr>`).join('') + '</table>' : '<div style="color:var(--text-light);font-size:12.5px;">ยังไม่มีกฎ</div>';
+      h += '<div style="margin-top:8px;"><button class="save" onclick="ruleNew()">➕ เพิ่มกฎใหม่</button></div>';
+      if (RE.form) h += renderForm();
+      const dis = new Set(RE.data.disable_builtin || []);
+      h += '<hr style="margin:14px 0;border:none;border-top:1px solid var(--border);"><h3 style="font-size:14px;">กฎมาตรฐาน — ติ๊ก = ลบ/ปิดกฎนั้น (เมื่อมีมาตรฐานใหม่มาแทน) · ติ๊กออก = เอากลับมาใช้</h3><input type="text" oninput="builtinFilter(this.value)" placeholder="ค้นหากฎ เช่น hba1c, ldl, bp, ckd" style="width:100%;padding:6px;margin-bottom:6px;"><div style="font-size:12px;max-height:240px;overflow:auto;border:1px solid var(--border);border-radius:8px;padding:6px 10px;">' +
+        RE.builtin.map(b => `<label class="bl-row" data-q="${esc((b.id + ' ' + b.text).toLowerCase())}" style="display:block;margin:3px 0;"><input type="checkbox" ${dis.has(b.id) ? 'checked' : ''} data-id="${esc(b.id)}" onchange="builtinToggle(this.dataset.id)"> <b>${esc(b.id)}</b> <span style="color:var(--text-light)">${esc(b.text)}</span></label>`).join('') + '</div>';
+      document.getElementById('rulesBody').innerHTML = h;
+    }
+
+    function renderForm() {
+      const f = RE.form, P = RE.params.map(p => [p.name, p.name + (p.unit ? ' (' + p.unit + ')' : '')]), opSel = (i, r) => sel(OPS.map(o => [o, o]), r.op, `rowSet(${i},'op',this.value)`);
+      let h = '<div style="margin-top:12px;border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;"><b>' + (RE.editing >= 0 ? 'แก้กฎ' : 'กฎใหม่') + '</b>';
+      h += `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;"><input type="text" value="${esc(f.id)}" oninput="formSet('id', this.value)" placeholder="รหัสกฎ เช่น my.ldl_dm" style="flex:1;min-width:150px;">` +
+        sel(RE.problems.concat(['Custom']).map(x => [x, 'กลุ่ม: ' + x]), f.problem, "formSet('problem', this.value)") +
+        sel(Object.keys(LEVEL_TH).map(k => [k, LEVEL_TH[k]]), f.level, "formSet('level', this.value)") + '</div>';
+      h += `<div style="margin-top:8px;font-size:12.5px;">เงื่อนไข: ต้องเข้า ${sel([['all', 'ทุกข้อ'], ['any', 'ข้อใดข้อหนึ่ง']], RE.join, 'formJoin(this.value)')}</div>`;
+      h += RE.rows.map((r, i) => {
+        let c = `<label style="display:inline-flex;gap:4px;align-items:center;"><input type="checkbox" style="width:auto;" ${r.not ? 'checked' : ''} onchange="rowSet(${i},'not',this.checked)"> ไม่ใช่</label> `;
+        if (r.kind === 'param') {
+          const bp = (RE.params.find(p => p.name === r.param) || {}).kind === 'bp';
+          c += sel(P, r.param, `rowParam(${i},this.value)`) +
+            sel(bp ? [['sys', 'ตัวบน'], ['dia', 'ตัวล่าง']] : [['', 'ล่าสุด'], ['first', 'ค่าแรก'], ['delta', 'เปลี่ยน (ล่าสุด-แรก)'], ['pct', 'เปลี่ยน %']], r.field || (bp ? 'sys' : ''), `rowSet(${i},'field',this.value)`) +
+            opSel(i, r) + ` <input type="text" value="${esc(r.value)}" oninput="rowSet(${i},'value',this.value)" style="width:80px;">`;
+        } else if (r.kind === 'problem') c += 'บันทึกมีโรค ' + sel(RE.problems.map(x => [x, x]), r.problem, `rowSet(${i},'problem',this.value)`);
+        else if (r.kind === 'concept') c += 'วันนี้ ' + sel(RE.concepts.map(x => [x.id, x.label]), r.concept, `rowConcept(${i},this.value)`) +
+          sel(r.concept === 'smoking' ? [['current', 'ยังสูบ'], ['former', 'เลิกแล้ว'], ['never', 'ไม่เคย'], ['not_smoking', 'ไม่สูบ']] : [['present', 'มี'], ['absent', 'ไม่มี']], r.is, `rowSet(${i},'is',this.value)`);
+        else if (r.kind === 'age') c += 'อายุ ' + opSel(i, r) + ` <input type="text" value="${esc(r.value)}" oninput="rowSet(${i},'value',this.value)" style="width:70px;">`;
+        else c += 'เพศ ' + sel([['M', 'ชาย'], ['F', 'หญิง']], r.value, `rowSet(${i},'value',this.value)`);
+        return `<div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:12.5px;">${c} <button class="del-btn" onclick="rowDel(${i})">ลบข้อ</button></div>`;
+      }).join('');
+      h += '<div style="margin-top:6px;font-size:12.5px;">เพิ่มข้อ: ' + [['param', 'ค่าแล็บ/ค่าวัด'], ['problem', 'โรคในบันทึก'], ['concept', 'อาการวันนี้'], ['age', 'อายุ'], ['sex', 'เพศ']].map(k => `<button class="del-btn" onclick="rowAdd('${k[0]}')">+ ${k[1]}</button>`).join(' ') + '</div>';
+      const ta = (key, label, ph) => `<div style="margin-top:8px;font-size:12.5px;">${label}<textarea oninput="formSet('${key}', this.value)" spellcheck="false" style="width:100%;min-height:52px;font-family:inherit;" placeholder="${ph}">${esc(f[key])}</textarea></div>`;
+      h += ta('short', 'ข้อความสั้นถึงผู้ป่วย (ไม่บังคับ · ห้ามมีตัวเลข · ใช้ {LDL} แทนค่า · คำสงฆ์ใช้ {ท่าน} {ทาน} {อาหาร} {ออกกำลัง} {กาย} {นอน})', 'LDL {LDL} สูง ควรปรึกษาแพทย์');
+      h += ta('long', 'ข้อความยาวถึงผู้ป่วย (ต้องมีถ้ามีข้อความสั้น)', 'ค่า LDL ของ{ท่าน}คือ {LDL} mg/dL ...');
+      h += ta('clinician', 'ข้อความเฉพาะแพทย์ (ไม่บังคับ · มีตัวเลขได้)', 'LDL {LDL} ร่วมกับ DM');
+      h += '<div style="margin-top:10px;"><button class="save" onclick="ruleCommit()">ใช้กฎนี้ (ยังไม่บันทึกลงไฟล์ จนกว่าจะกด 💾)</button> <button class="cancel" onclick="ruleCancel()">ยกเลิก</button></div></div>';
+      return h;
+    }
+
+    function formSet(k, v) { RE.form[k] = v; }
+    function formLevel(v) { RE.form.level = v; }
+    function formJoin(v) { RE.join = v; }
+    function rowSet(i, k, v) { RE.rows[i][k] = v; }
+    function rowParam(i, v) { RE.rows[i].param = v; RE.rows[i].field = ''; renderRules(); }
+    function rowConcept(i, v) { RE.rows[i].concept = v; RE.rows[i].is = v === 'smoking' ? 'current' : 'present'; renderRules(); }
+    function rowDel(i) { RE.rows.splice(i, 1); renderRules(); }
+    function rowAdd(kind) {
+      const base = { param: { kind, not: false, param: RE.params[0].name, field: '', op: '>=', value: '' }, problem: { kind, not: false, problem: RE.problems[0] },
+        concept: { kind, not: false, concept: RE.concepts[0].id, is: 'present' }, age: { kind, not: false, op: '>=', value: '' }, sex: { kind, not: false, op: '==', value: 'M' } }[kind];
+      RE.rows.push(base); renderRules();
+    }
+    function ruleNew() { RE.form = { id: '', problem: 'Custom', level: 'attention', short: '', long: '', clinician: '' }; RE.rows = []; RE.join = 'all'; RE.editing = -1; renderRules(); }
+    function ruleCancel() { RE.form = null; renderRules(); }
+    function ruleEdit(i) {
+      const r = RE.data.rules[i], fr = flatRows(r.when);
+      if (!fr) { rulesMsg('กฎนี้ซ้อนเงื่อนไขเกินกว่าฟอร์มจะแสดง · แก้ได้ที่ไฟล์ data/custom_rules.json (กฎยังทำงานตามปกติ)', true); return; }
+      RE.form = { id: r.id, problem: r.problem || 'Custom', level: r.level, short: (r.patient || {}).short || '', long: (r.patient || {}).long || '', clinician: r.clinician || '' };
+      RE.rows = fr.rows; RE.join = fr.join; RE.editing = i; renderRules();
+    }
+    function ruleCommit() {
+      const f = RE.form;
+      if (!RE.rows.length) { rulesMsg('ต้องมีเงื่อนไขอย่างน้อยหนึ่งข้อ', true); return; }
+      const conds = RE.rows.map(rowToCond), rule = { id: f.id.trim(), enabled: true, problem: f.problem, level: f.level, when: conds.length === 1 ? conds[0] : { [RE.join]: conds } };
+      if (f.short.trim() || f.long.trim()) rule.patient = { short: f.short.trim(), long: f.long.trim() };
+      if (f.clinician.trim()) rule.clinician = f.clinician.trim();
+      if (RE.editing >= 0) { rule.enabled = RE.data.rules[RE.editing].enabled !== false; RE.data.rules[RE.editing] = rule; } else RE.data.rules.push(rule);
+      RE.form = null; rulesMsg('เพิ่มเข้ารายการแล้ว กด 💾 บันทึกกฎทั้งหมด เพื่อให้ระบบตรวจและใช้งาน หรือกด "ลอง" เพื่อทดสอบก่อน', false); renderRules();
+    }
+    function ruleToggle(i) { const r = RE.data.rules[i]; r.enabled = r.enabled === false; }
+    function ruleDelete(i) { RE.data.rules.splice(i, 1); RE.form = null; renderRules(); }
+    function builtinFilter(q) {
+      q = q.trim().toLowerCase();
+      document.querySelectorAll('#rulesBody .bl-row').forEach(el => { el.style.display = !q || el.dataset.q.includes(q) ? 'block' : 'none'; });
+    }
+    function builtinToggle(id) {
+      const s = new Set(RE.data.disable_builtin || []);
+      if (s.has(id)) s.delete(id); else s.add(id);
+      RE.data.disable_builtin = [...s];
+    }
+    function cleanData() {                           // what is sent: only the fields the file format knows
+      return { disable_builtin: RE.data.disable_builtin || [], rules: (RE.data.rules || []).map(r => { const { _describe, ...rest } = r; return rest; }) };
+    }
+    async function rulesTry() {
+      if (!RE) return;
+      const d = await rulesCall({ action: 'try', data: cleanData(), note: document.getElementById('rtNote').value, age: document.getElementById('rtAge').value || null, sex: document.getElementById('rtSex').value });
+      if (d.error) { document.getElementById('rtOut').textContent = d.error; return; }
+      document.getElementById('rtOut').innerHTML = (d.errors.length ? '<div style="color:#B91C1C">⚠ ' + d.errors.map(esc).join('<br>⚠ ') + '</div>' : '') +
+        `<div><b>กฎที่เพิ่มเองที่ทำงาน:</b> ${d.fired.length ? esc(d.fired.join(', ')) : 'ไม่มี'}</div><hr><div>${esc(d.result)}</div><hr><div>${d.clinician.map(n => esc(n.icon + ' ' + n.text)).join('<br>')}</div>`;
+    }
+    function impactHtml(d, confirmFn) {
+      let h = '';
+      if (d.warnings && d.warnings.length) h += '<div style="color:#B45309;"><b>⚠ ควรตรวจสอบ</b><br>' + d.warnings.map(esc).join('<br>') + '</div>';
+      if (d.violated && d.violated.length) h += '<div style="color:#B91C1C;margin-top:6px;"><b>❗ เปลี่ยนผลของตัวอย่างที่แพทย์เคยยืนยันแล้ว:</b> ' + d.violated.map(esc).join(', ') + '</div>';
+      if (d.diffs && d.diffs.length) {
+        h += '<div style="margin-top:6px;"><b>ผลที่จะเปลี่ยนกับบันทึกตัวอย่าง (' + d.diffs.length + ' ข้อ)</b></div>' + d.diffs.map(x =>
+          `<div style="margin-top:6px;padding:6px 8px;border:1px solid var(--border);border-radius:8px;background:#fff;"><div style="font-size:12px;color:var(--text-light);white-space:pre-wrap;">${esc(x.id)}${x.confirmed ? ' ✓ยืนยันแล้ว' : ''} · ${esc(x.note)}</div>` +
+          x.removed.map(r => `<div style="text-decoration:line-through;color:#6B7280;">${esc(r.text)}</div>`).join('') + x.added.map(r => `<div>${esc(r.text)}</div>`).join('') +
+          (x.notes_removed.length || x.notes_added.length ? `<div style="font-size:12px;color:var(--text-light);">เฉพาะแพทย์: ${x.notes_removed.map(k => '− ' + esc(k)).concat(x.notes_added.map(k => '+ ' + esc(k))).join(' · ')}</div>` : '') +
+          (x.error ? '<div style="color:#B91C1C">เกิดข้อผิดพลาดกับตัวอย่างนี้ (' + esc(x.error) + ')</div>' : '') + '</div>').join('');
+      }
+      return h + `<div style="margin-top:8px;"><button class="save" onclick="${confirmFn}()">ยืนยันและบันทึก</button> <span style="font-size:12px;">หรือปิดหน้าต่างเพื่อยกเลิก</span></div>`;
+    }
+    async function rulesConfirm() { await rulesSave(true); }
+    async function rulesSave(confirm) {
+      if (!RE) return;
+      const d = await rulesCall({ action: 'save', data: cleanData(), confirm: !!confirm });
+      if (d.needsConfirm) { rulesMsg(impactHtml(d, 'rulesConfirm'), true); return; }
+      if (d.error) { rulesMsg(esc(d.error), true); return; }
+      if (!d.success) { rulesMsg('❌ ยังไม่ได้บันทึก เพราะมีกฎที่ไม่ผ่านการตรวจ:<br>' + d.errors.map(esc).join('<br>'), true); return; }
+      rulesMsg('✅ บันทึกแล้ว ใช้ได้ทันทีโดยไม่ต้องรีสตาร์ต (สำรองฉบับก่อนหน้าไว้ที่ data/custom_rules.json.bak)', false);
+      const g = await rulesCall({ action: 'get' }); RE = { ...g, form: null, rows: [], join: 'all', editing: -1 }; renderRules();
+    }
+
+    // ===== Thresholds editor (admin) =====
+    let TG = null;                                   // { rows, groups, cur: {path: value}, changes: {path: value} }
+    function targetsMsg(html, bad) { document.getElementById('targetsMsg').innerHTML = html ? `<div style="margin:8px 0;padding:8px 10px;border-radius:8px;background:${bad ? '#FEE2E2' : '#DCFCE7'};font-size:12.5px;">${html}</div>` : ''; }
+    async function targetsCall(body) {
+      const res = await fetch(API + '/api/admin/targets', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify(body) });
+      return res.json();
+    }
+    async function showTargetsModal() {
+      document.getElementById('targetsModal').classList.add('show');
+      const d = await targetsCall({ action: 'get' });
+      if (d.error) { targetsMsg(esc(d.error), true); return; }
+      TG = { ...d, cur: {}, changes: {} };
+      d.rows.forEach(r => { TG.cur[r.path] = r.kind === 'pair' ? r.value.slice() : r.value; });
+      targetsMsg(esc(d.status) + (d.lastEdit ? ' · แก้ผ่านหน้าเว็บล่าสุด ' + esc(d.lastEdit) : ''), true);
+      renderTargets();
+    }
+    function closeTargetsModal() { document.getElementById('targetsModal').classList.remove('show'); }
+    function renderTargets() {
+      const order = [], by = {};
+      TG.rows.forEach(r => { if (!by[r.group]) { by[r.group] = []; order.push(r.group); } by[r.group].push(r); });
+      const inp = (r, idx) => `<input type="text" inputmode="decimal" value="${esc(idx === null ? r.value : r.value[idx])}" oninput="targetSet(this,${JSON.stringify(r.path).replace(/"/g, '&quot;')},'${r.kind}',${idx})" style="width:90px;padding:5px;">`;
+      document.getElementById('targetsBody').innerHTML = order.map(g => `<div style="margin-top:12px;border:1px solid var(--border);border-radius:10px;padding:8px 12px;"><b style="font-size:13px;">${esc(TG.groups[g] || g)}</b>` +
+        by[g].map(r => {
+          let c;
+          if (r.kind === 'num') c = inp(r, null);
+          else if (r.kind === 'pair') c = inp(r, 0) + ' , ' + inp(r, 1);
+          else if (r.kind === 'bool') c = `<input type="checkbox" ${r.value ? 'checked' : ''} onchange="targetSet(this,${JSON.stringify(r.path).replace(/"/g, '&quot;')},'bool',null)" style="width:auto;">`;
+          else c = `<input type="text" value="${esc(r.value)}" oninput="targetSet(this,${JSON.stringify(r.path).replace(/"/g, '&quot;')},'text',null)" style="width:100%;padding:5px;">`;
+          return `<div style="display:flex;gap:10px;align-items:center;margin-top:6px;font-size:12.5px;flex-wrap:wrap;"><span style="min-width:230px;flex:0 0 auto;">${esc(r.label)}</span>${c}</div>`;
+        }).join('') + '</div>').join('');
+    }
+    function targetSet(el, path, kind, idx) {
+      let v;
+      if (kind === 'bool') v = el.checked;
+      else if (kind === 'text') v = el.value;
+      else if (kind === 'pair') { v = TG.cur[path].slice(); v[idx] = el.value.trim() === '' ? NaN : Number(el.value); }
+      else v = el.value.trim() === '' ? NaN : Number(el.value);
+      TG.cur[path] = v;
+      const orig = TG.rows.find(r => r.path === path).value;
+      const same = JSON.stringify(v) === JSON.stringify(orig);
+      if (same) delete TG.changes[path]; else TG.changes[path] = v;
+      el.style.borderColor = same ? '' : '#F59E0B';
+    }
+    async function targetsConfirm() { await targetsSave(true); }
+    async function targetsSave(confirm) {
+      if (!TG) return;
+      if (!Object.keys(TG.changes).length) { targetsMsg('ยังไม่ได้แก้ค่าใด', true); return; }
+      const d = await targetsCall({ action: 'save', changes: TG.changes, confirm: !!confirm });
+      if (d.error) { targetsMsg(esc(d.error), true); return; }
+      if (d.needsConfirm) { targetsMsg(impactHtml(d, 'targetsConfirm'), true); return; }
+      if (!d.success) { targetsMsg('❌ ยังไม่ได้บันทึก:<br>' + d.errors.map(esc).join('<br>'), true); return; }
+      await showTargetsModal();
+      targetsMsg('✅ บันทึกแล้ว (' + d.changed.map(esc).join(', ') + ') ใช้ได้ทันที · สำรองฉบับก่อนหน้าที่ data/targets.json.bak · เอกสารตรวจกฎ docs/RULES_REVIEW.md อัปเดตแล้ว', false);
+    }
+
+    // ===== Golden cases (admin) =====
+    async function goldenCall(body) {
+      const res = await fetch(API + '/api/admin/golden', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify(body) });
+      return res.json();
+    }
+    function goldenMsg(html, bad) { document.getElementById('goldenMsg').innerHTML = html ? `<div style="margin:8px 0;padding:8px 10px;border-radius:8px;background:${bad ? '#FEE2E2' : '#DCFCE7'};font-size:12.5px;">${html}</div>` : ''; }
+    async function showGoldenModal() { document.getElementById('goldenModal').classList.add('show'); await renderGolden(); }
+    function closeGoldenModal() { document.getElementById('goldenModal').classList.remove('show'); }
+    async function renderGolden() {
+      const d = await goldenCall({ action: 'list' });
+      if (d.error) { goldenMsg(esc(d.error), true); return; }
+      const done = d.cases.filter(c => c.confirmed).length;
+      goldenMsg(`ตัวอย่าง ${d.cases.length} ข้อ · แพทย์ยืนยันแล้ว ${done} ข้อ`, false);
+      document.getElementById('goldenBody').innerHTML = d.cases.map(c => `<details style="margin-top:8px;border:1px solid var(--border);border-radius:8px;padding:6px 10px;"><summary style="cursor:pointer;font-size:12.5px;">` +
+        `${c.confirmed ? '✓' : '○'} ${esc(c.id)} · ${esc(c.note.replace(/\n/g, ' ⏎ ').slice(0, 90))}${c.changedSinceConfirmed ? ' <b style="color:#B91C1C">⚠ ผลเปลี่ยนจากที่ยืนยัน</b>' : ''}</summary>` +
+        `<div style="font-size:12px;color:var(--text-light);margin-top:4px;white-space:pre-wrap;">อายุ ${esc(c.age ?? '-')} · เพศ ${esc(c.sex || '-')}\n${esc(c.note)}</div>` +
+        `<div style="white-space:pre-wrap;font-size:12.5px;margin-top:6px;">${esc(c.patient)}</div><div style="font-size:12px;margin-top:6px;">${c.clinician.map(t => 'ℹ️ ' + esc(t)).join('<br>')}</div>` +
+        `<div style="margin-top:8px;"><label style="font-size:12.5px;"><input type="checkbox" style="width:auto;" ${c.confirmed ? 'checked' : ''} data-id="${esc(c.id)}" onchange="goldenConfirm(this.dataset.id, this.checked)"> แพทย์ตรวจแล้ว ผลนี้ถูกต้อง</label> ` +
+        `<button class="del-btn" data-id="${esc(c.id)}" onclick="goldenDelete(this.dataset.id)">ลบตัวอย่าง</button></div></details>`).join('');
+    }
+    async function goldenAdd() {
+      const d = await goldenCall({ action: 'add', note: document.getElementById('gcNote').value, age: document.getElementById('gcAge').value || null, sex: document.getElementById('gcSex').value });
+      if (d.error) { goldenMsg(esc(d.error), true); return; }
+      document.getElementById('gcNote').value = ''; await renderGolden();
+    }
+    async function goldenConfirm(id, checked) { await goldenCall({ action: 'confirm', id, confirmed: checked }); await renderGolden(); }
+    async function goldenDelete(id) { await goldenCall({ action: 'delete', id }); await renderGolden(); }
+
+    // ===== Learning log =====
+    async function learnCall(path, body) {
+      const res = await fetch(API + path, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify(body) });
+      return res.json();
+    }
+    function learnInit(enabled) {
+      const box = document.getElementById('learnBox');
+      box.style.display = enabled ? 'block' : 'none';
+      box.innerHTML = enabled ? '<button class="del-btn" onclick="learnPreview()">🧠 บันทึกตัวอย่างนี้เพื่อปรับปรุงระบบ</button> <span style="color:var(--text-light)">ดูก่อนว่าจะเก็บอะไร ยังไม่เก็บจนกว่าจะยืนยัน</span>' : '';
+    }
+    async function learnPreview() {
+      const d = await learnCall('/api/learn', { action: 'preview', note: document.getElementById('labValues').value });
+      const box = document.getElementById('learnBox');
+      if (d.error) { box.innerHTML = '<span style="color:#B91C1C">' + esc(d.error) + '</span>'; return; }
+      box.innerHTML = '<b>จะเก็บเฉพาะรายการนี้ (ไม่เก็บข้อความบันทึก อายุ เพศ วันที่):</b><div style="margin:6px 0;">' + (d.rows.length ? d.rows.map(r => '• ' + esc(r)).join('<br>') : 'ไม่มีอะไรให้เก็บ') + '</div>' +
+        (d.rows.length ? '<button class="save" onclick="learnSave()">ยืนยันเก็บ</button> ' : '') + '<button class="cancel" onclick="learnInit(true)">ยกเลิก</button>';
+    }
+    async function learnSave() {
+      const d = await learnCall('/api/learn', { action: 'save', note: document.getElementById('labValues').value });
+      document.getElementById('learnBox').innerHTML = d.error ? '<span style="color:#B91C1C">' + esc(d.error) + '</span>' : '✅ เก็บแล้ว ' + esc(d.stored) + ' รายการ';
+    }
+    function learnAdminMsg(st) { document.getElementById('learnAdminMsg').innerHTML = `<div style="margin:8px 0;padding:8px 10px;border-radius:8px;background:#EEF2FF;font-size:12.5px;">สถานะ: ${st.enabled ? 'เปิด' : 'ปิด'} · เก็บไว้ ${esc(st.rows)} รายการ (สูงสุด ${esc(st.max)})</div>`; document.getElementById('learnToggle').checked = !!st.enabled; }
+    async function showLearnModal() { document.getElementById('learnModal').classList.add('show'); document.getElementById('learnOut').style.display = 'none'; learnAdminMsg(await learnCall('/api/admin/learning', { action: 'status' })); }
+    function closeLearnModal() { document.getElementById('learnModal').classList.remove('show'); }
+    async function learnAdminSet(on) { learnAdminMsg(await learnCall('/api/admin/learning', { action: 'set', enabled: on })); }
+    async function learnAdminExport() { const d = await learnCall('/api/admin/learning', { action: 'export' }); const o = document.getElementById('learnOut'); o.style.display = 'block'; o.value = JSON.stringify(d); }
+    async function learnAdminClear() { learnAdminMsg(await learnCall('/api/admin/learning', { action: 'clear' })); document.getElementById('learnOut').style.display = 'none'; }
+
+    // ===== Admin =====
+    async function showAdminModal() {
+      document.getElementById('adminModal').classList.add('show');
+      const res = await fetch(API + '/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({ action: 'list' })
+      });
+      const data = await res.json();
+      const roles = { admin: 'ผู้ดูแล', doctor: 'แพทย์', nurse: 'พยาบาล', pharmacist: 'เภสัชกร', staff: 'เจ้าหน้าที่' };
+      let html = '<table class="user-table"><tr><th>ชื่อผู้ใช้</th><th>ชื่อแสดง</th><th>ตำแหน่ง</th><th></th></tr>';
+      for (const u of data.users) {
+        html += `<tr><td>${esc(u.username)}</td><td>${esc(u.display_name)}</td><td>${roles[u.role] || u.role}</td>
+    <td><button class="del-btn" onclick="resetPin(${u.id},'${u.username}')">🔑 เปลี่ยน PIN</button> ${u.is_admin ? '👑' : '<button class="del-btn" onclick="deleteUser(' + u.id + ')">ลบ</button>'}</td></tr>`;
+      }
+      html += '</table>';
+      document.getElementById('userList').innerHTML = html;
+    }
+
+    function closeAdminModal() { document.getElementById('adminModal').classList.remove('show'); }
+
+    async function addUser() {
+      const username = document.getElementById('newUsername').value.trim();
+      const displayName = document.getElementById('newDisplayName').value.trim();
+      const pin = document.getElementById('newPin').value.trim();
+      const role = document.getElementById('newRole').value;
+      if (!username || !displayName || !pin) { alert('กรอกข้อมูลให้ครบ'); return; }
+      const res = await fetch(API + '/api/admin/users', {
+        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({ action: 'add', username, displayName, pin, role })
+      });
+      const data = await res.json();
+      if (data.error) alert(data.error); else { alert('✅ เพิ่มผู้ใช้แล้ว'); showAdminModal(); }
+      document.getElementById('newUsername').value = '';
+      document.getElementById('newDisplayName').value = '';
+      document.getElementById('newPin').value = '';
+    }
+
+    async function deleteUser(id) {
+      if (!confirm('ลบผู้ใช้นี้?')) return;
+      await fetch(API + '/api/admin/users', {
+        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({ action: 'delete', userId: id })
+      });
+      showAdminModal();
+    }
+
+    async function resetPin(id, username) {
+      const myPin = prompt('🔐 ยืนยันตัวตน: กรอก PIN ของคุณ (admin) ก่อน:');
+      if (!myPin) return;
+      const newPin = prompt(`กรอก PIN ใหม่สำหรับ ${username} (อย่างน้อย 6 หลัก):`);
+      if (!newPin || newPin.length < 6) { if (newPin !== null) alert('PIN ต้องอย่างน้อย 6 หลัก'); return; }
+      const res = await fetch(API + '/api/admin/users', {
+        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({ action: 'reset_pin', userId: id, pin: newPin, confirmPin: myPin })
+      });
+      const data = await res.json();
+      if (data.error) alert(data.error); else alert(`✅ เปลี่ยน PIN ของ ${username} แล้ว`);
+    }
+
+    // ===== Stats =====
+    async function showStatsModal() {
+      document.getElementById('statsModal').classList.add('show');
+      document.getElementById('statsContent').innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-light);">กำลังโหลด...</div>';
+      try {
+        const res = await fetch(API + '/api/admin/stats', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }
+        });
+        const data = await res.json();
+        if (data.error) { document.getElementById('statsContent').innerHTML = `<div class="stats-empty">${data.error}</div>`; return; }
+        renderStats(data);
+      } catch (e) {
+        document.getElementById('statsContent').innerHTML = '<div class="stats-empty">เชื่อมต่อ server ไม่ได้</div>';
+      }
+    }
+
+    function closeStatsModal() { document.getElementById('statsModal').classList.remove('show'); }
+
+    function renderStats(data) {
+      const patternNames = { standard: '📄 มาตรฐาน', simple: '🟢 เรียบง่าย', detailed: '📊 ละเอียด', unknown: '❓ ไม่ระบุ' };
+      let html = '';
+
+      // Summary cards
+      html += '<div class="stats-grid">';
+      html += `<div class="stat-card"><div class="stat-number">${data.activeSessions}</div><div class="stat-label">Sessions ที่ active</div></div>`;
+      html += `<div class="stat-card"><div class="stat-number">${data.totalLogs}</div><div class="stat-label">Usage logs ทั้งหมด</div></div>`;
+      html += '</div>';
+
+      // Daily stats
+      html += '<div class="stats-section"><h4>📅 การใช้งานรายวัน (7 วัน)</h4>';
+      if (data.daily.length === 0) {
+        html += '<div class="stats-empty">ไม่มีข้อมูล</div>';
+      } else {
+        html += '<table class="stats-table"><tr><th>วันที่</th><th>จำนวนครั้ง</th></tr>';
+        for (const d of data.daily) { html += `<tr><td>${esc(d.day)}</td><td>${esc(d.count)}</td></tr>`; }
+        html += '</table>';
+      }
+      html += '</div>';
+
+      // Per-user stats
+      html += '<div class="stats-section"><h4>👤 ผู้ใช้งาน (30 วัน)</h4>';
+      if (data.perUser.length === 0) {
+        html += '<div class="stats-empty">ไม่มีข้อมูล</div>';
+      } else {
+        html += '<table class="stats-table"><tr><th>ชื่อ</th><th>Username</th><th>ครั้ง</th></tr>';
+        for (const u of data.perUser) { html += `<tr><td>${esc(u.display_name)}</td><td>${esc(u.username)}</td><td>${esc(u.count)}</td></tr>`; }
+        html += '</table>';
+      }
+      html += '</div>';
+
+      // Pattern stats
+      html += '<div class="stats-section"><h4>📋 Pattern ที่ใช้ (30 วัน)</h4>';
+      if (data.perPattern.length === 0) {
+        html += '<div class="stats-empty">ไม่มีข้อมูล</div>';
+      } else {
+        html += '<table class="stats-table"><tr><th>Pattern</th><th>ครั้ง</th></tr>';
+        for (const p of data.perPattern) { html += `<tr><td>${esc(patternNames[p.pattern] || p.pattern)}</td><td>${esc(p.count)}</td></tr>`; }
+        html += '</table>';
+      }
+      html += '</div>';
+
+      document.getElementById('statsContent').innerHTML = html;
+    }
+
+    async function clearSessions() {
+      if (!confirm('ล้าง sessions ทั้งหมด? (ผู้ใช้อื่นจะต้อง login ใหม่)')) return;
+      const res = await fetch(API + '/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({ action: 'clear_sessions' })
+      });
+      const data = await res.json();
+      alert(data.message || data.error);
+      showStatsModal();
+    }
+
+    async function clearLogs() {
+      if (!confirm('ล้าง usage log ทั้งหมด? (ข้อมูลสถิติจะหายไป)')) return;
+      const res = await fetch(API + '/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({ action: 'clear_logs' })
+      });
+      const data = await res.json();
+      alert(data.message || data.error);
+      showStatsModal();
+    }
+
+    // ===== Patterns =====
+    // ===== UI =====
+    function selectPattern(el) {
+      document.querySelectorAll('.pattern-option').forEach(e => e.classList.remove('active'));
+      el.classList.add('active');
+      currentPattern = el.dataset.pattern;
+    }
+
+    function toggleMonk() {
+      monkMode = !monkMode;
+      document.getElementById('monkToggle').classList.toggle('active', monkMode);
+      document.getElementById('monkBadge').classList.toggle('show', monkMode);
+    }
+
+    // ===== Generate (local rule engine; nothing is stored) =====
+    function esc(t) { return String(t ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+    const fmtV = (v, kind) => Array.isArray(v) ? `${v[0]}${kind === 'range' ? '–' : '/'}${v[1]}` : v;
+
+    function renderRead(data) {
+      let h = '';
+      for (const p of data.table) {
+        h += `<div style="margin-bottom:6px;"><b>${esc(p.problem)}</b>${p.known ? '' : ' <span style="color:#B45309">(ชื่อปัญหาไม่รู้จัก)</span>'}: `;
+        h += p.values.map(v => `${esc(v.param)} <b>${esc(v.series.map(x => fmtV(x, v.kind)).join(' → '))}</b> ${esc(v.unit)}` +
+          (v.invalid ? ' <span style="color:#B91C1C">⚠ ข้าม ไม่แปลผล</span>' : (v.has_rules ? '' : ' <span style="color:#6B7280">(ยังไม่มีกฎ)</span>')) +
+          v.flags.map(f => `<div style="color:#B45309;margin-left:14px;">⚠ ${esc(f)}</div>`).join('')).join(' · ');
+        if (p.tags && p.tags.length) h += ' ' + p.tags.map(t => `<span style="background:#EEF2FF;border-radius:6px;padding:1px 6px;">${esc(t.label)}=<b>${t.value === 'absent' ? 'ไม่มี' : 'มี'}</b></span>`).join(' ');
+        if (p.unparsed) h += `<div style="color:#B45309;margin-left:14px;">? ไม่เข้าใจ: ${esc(p.unparsed)}</div>`;
+        h += '</div>';
+      }
+      for (const v of data.visits) {
+        h += `<div style="margin-bottom:6px;"><b>${esc(v.date_be || 'วันที่?')}</b>: ` +
+          (v.concepts.map(c => `${esc(c.label)}=<b>${esc({ present: 'มี', absent: 'ไม่มี', current: 'ยังสูบ', former: 'เลิกแล้ว', never: 'ไม่เคย', not_smoking: 'ไม่สูบ' }[c.value] || c.value)}</b>`).join(' · ') || '—') +
+          (v.warning ? ` <span style="color:#B91C1C">⚠ ${esc(v.warning)}</span>` : '') +
+          (v.leftover.length ? `<div style="color:#B45309;margin-left:14px;">? ไม่เข้าใจ: ${esc(v.leftover.join(' '))}</div>` : '') + '</div>';
+      }
+      for (const u of data.unparsed_lines) h += `<div style="color:#B45309;">? ไม่เข้าใจทั้งบรรทัด: ${esc(u.text)}</div>`;
+      for (const w of data.warnings) h += `<div style="color:#B45309;">⚠ ${esc(w)}</div>`;
+      document.getElementById('readTable').innerHTML = h || '<div>ไม่พบข้อมูลที่อ่านได้</div>';
+      document.getElementById('clinList').innerHTML = data.clinician.length
+        ? data.clinician.map(n => `<div>${n.icon} ${esc(n.text)}</div>`).join('') : '<div style="color:var(--text-light)">ไม่มี</div>';
+      const warn = document.getElementById('draftWarn');
+      warn.style.display = /DRAFT/.test(data.status) ? 'block' : 'none';
+      warn.innerHTML = `⚠️ <b>กฎและแม่แบบยังเป็นร่าง ยังไม่ผ่านการตรวจทานโดยแพทย์</b> (${esc(data.status)}) — ตรวจเกณฑ์และถ้อยคำก่อนใช้กับผู้ป่วยจริง`;
+    }
+
+    async function generate() {
+      if (!token) { alert('กรุณา login ก่อน'); return; }
+      const note = document.getElementById('labValues').value.trim();
+      if (!note) { alert('กรุณาใส่บันทึก OPD'); return; }
+      document.getElementById('placeholder').style.display = 'none';
+      document.getElementById('loading').classList.add('show');
+      document.getElementById('reviewStep').style.display = 'none';
+      document.getElementById('confirmedStep').style.display = 'none';
+      document.getElementById('reviewBtns').style.display = 'none';
+      document.getElementById('confirmedBtns').style.display = 'none';
+      document.getElementById('generateBtn').disabled = true;
+      try {
+        const res = await fetch(API + '/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+          body: JSON.stringify({ note, age: document.getElementById('ptAge').value || null, sex: document.getElementById('ptSex').value, tcvr: document.getElementById('ptTcvr').value || null, pattern: currentPattern, monkMode })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'เกิดข้อผิดพลาด');
+        renderRead(data); learnInit(!!data.learning);
+        document.getElementById('editArea').value = data.result;
+        document.getElementById('loading').classList.remove('show');
+        document.getElementById('reviewStep').style.display = 'block';
+        document.getElementById('reviewBtns').style.display = 'flex';
+        document.getElementById('printSubtitle').textContent = 'จัดทำโดย Lab Interpreter' + (monkMode ? ' (ฉบับพระสงฆ์)' : '') + ' — กรุณาปรึกษาแพทย์เพิ่มเติม';
+      } catch (err) {
+        document.getElementById('loading').classList.remove('show');
+        document.getElementById('placeholder').style.display = 'flex';
+        alert('ข้อผิดพลาด: ' + err.message);
+      }
+      document.getElementById('generateBtn').disabled = false;
+    }
+
+    // ===== Review Workflow =====
+    function confirmResult() {
+      const name = document.getElementById('reviewerName').value.trim();
+      if (!name) { alert('กรุณาระบุชื่อผู้ตรวจสอบ'); return; }
+      const role = document.getElementById('reviewerRole').value;
+      const now = new Date().toLocaleString('th-TH');
+      const reviewer = `${role} ${name}`;
+      document.getElementById('resultText').textContent = document.getElementById('editArea').value;
+      document.getElementById('confirmedInfo').textContent = `ตรวจสอบโดย ${reviewer} เมื่อ ${now}`;
+      document.getElementById('printReviewer').textContent = reviewer;
+      document.getElementById('reviewStep').style.display = 'none';
+      document.getElementById('reviewBtns').style.display = 'none';
+      document.getElementById('confirmedStep').style.display = 'block';
+      document.getElementById('confirmedBtns').style.display = 'flex';
+    }
+
+    function backToEdit() {
+      document.getElementById('editArea').value = document.getElementById('resultText').textContent;
+      document.getElementById('confirmedStep').style.display = 'none';
+      document.getElementById('confirmedBtns').style.display = 'none';
+      document.getElementById('reviewStep').style.display = 'block';
+      document.getElementById('reviewBtns').style.display = 'flex';
+    }
+
+    function printResult() {
+      const now = new Date().toLocaleString('th-TH');
+      document.getElementById('printDate').textContent = now;
+      document.getElementById('printDateLine').textContent = 'วันที่พิมพ์: ' + now;
+      document.getElementById('printTitle').textContent = monkMode ? '🙏 คำอธิบายผลตรวจสังขารธาตุ ถวายพระคุณเจ้า' : '🩺 คำอธิบายผลตรวจเลือดของท่าน';
+      document.getElementById('printSubtitle').textContent = 'จัดทำโดย Lab Interpreter' + (monkMode ? ' (ฉบับพระสงฆ์)' : '') + ' — กรุณาปรึกษาแพทย์เพิ่มเติม';
+      window.print();
+    }
+
+    function copyResult() {
+      navigator.clipboard.writeText(document.getElementById('resultText').textContent).then(() => {
+        const b = event.target; b.textContent = '✅ Copied!'; setTimeout(() => b.textContent = '📋 Copy', 2000);
+      });
+    }
+
+    function clearAll() {
+      ['labValues', 'ptAge', 'ptSex', 'ptTcvr'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('readTable').innerHTML = ''; document.getElementById('clinList').innerHTML = '';
+      document.getElementById('editArea').value = '';
+      document.getElementById('resultText').textContent = '';
+      ['reviewStep', 'confirmedStep'].forEach(id => document.getElementById(id).style.display = 'none');
+      ['reviewBtns', 'confirmedBtns'].forEach(id => document.getElementById(id).style.display = 'none');
+      document.getElementById('placeholder').style.display = 'flex';
+    }
+
+    // ===== Init =====
+    checkSession();
+  </script>
+</body>
+
+</html>

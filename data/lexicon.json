@@ -1,0 +1,1060 @@
+{
+ "_meta": {
+  "version": "0.1-draft",
+  "note": "พจนานุกรมคำของบันทึก OPD แพทย์เพิ่ม/แก้คำได้ที่ไฟล์นี้ โดยไม่ต้องแก้โค้ด ตัวพิมพ์เล็ก/ใหญ่ไม่มีผล"
+ },
+ "settings": {
+  "two_digit_year_is_buddhist_era": true
+ },
+ "problems": {
+  "DM": [
+   "dm",
+   "t2dm",
+   "dm2",
+   "เบาหวาน"
+  ],
+  "HT": [
+   "ht",
+   "htn",
+   "ความดัน",
+   "ความดันสูง"
+  ],
+  "CKD": [
+   "ckd",
+   "ไตเรื้อรัง",
+   "kub",
+   "u/s kub",
+   "us kub",
+   "อัลตราซาวด์ไต"
+  ],
+  "Obesity": [
+   "obesity",
+   "obese",
+   "อ้วน",
+   "โรคอ้วน"
+  ],
+  "Dyslipidemia": [
+   "dlp",
+   "dyslipidemia",
+   "lipid",
+   "ไขมันสูง",
+   "ไขมัน"
+  ],
+  "Anemia": [
+   "anemia",
+   "anaemia",
+   "cbc",
+   "ซีด",
+   "โลหิตจาง"
+  ],
+  "Warfarin": [
+   "warfarin",
+   "wf",
+   "coumadin",
+   "วาฟาริน"
+  ],
+  "DN": [
+   "dn",
+   "dkd",
+   "diabetic nephropathy",
+   "เบาหวานขึ้นไต"
+  ],
+  "DR": [
+   "dr",
+   "npdr",
+   "pdr",
+   "retinopathy",
+   "เบาหวานขึ้นตา"
+  ],
+  "MAFLD": [
+   "mafld",
+   "masld",
+   "nafld",
+   "mash",
+   "nash",
+   "fatty liver",
+   "ไขมันพอกตับ",
+   "ตับ"
+  ],
+  "CAD": [
+   "cad",
+   "ihd",
+   "coronary",
+   "หลอดเลือดหัวใจ"
+  ],
+  "Stroke": [
+   "stroke",
+   "cva",
+   "tia",
+   "อัมพาต",
+   "อัมพฤกษ์",
+   "หลอดเลือดสมอง"
+  ],
+  "COPD": [
+   "copd",
+   "ถุงลมโป่งพอง",
+   "ปอดอุดกั้นเรื้อรัง"
+  ],
+  "Asthma": [
+   "asthma",
+   "หอบหืด",
+   "หืด"
+  ]
+ },
+ "params": {
+  "FBS": {
+   "aliases": [
+    "fbs",
+    "fpg"
+   ],
+   "unit": "mg/dL",
+   "range": [
+    30,
+    600
+   ],
+   "convert": {
+    "mmol/l": {
+     "factor": 18.0182,
+     "offset": 0
+    }
+   },
+   "has_rules": true
+  },
+  "HbA1c": {
+   "aliases": [
+    "hba1c",
+    "hb a1c",
+    "a1c"
+   ],
+   "unit": "%",
+   "range": [
+    3,
+    20
+   ],
+   "convert": {
+    "mmol/mol": {
+     "factor": 0.09148,
+     "offset": 2.152
+    }
+   },
+   "has_rules": true
+  },
+  "BP": {
+   "aliases": [
+    "bp"
+   ],
+   "unit": "mmHg",
+   "kind": "bp",
+   "has_rules": true
+  },
+  "HomeBP": {
+   "aliases": [
+    "hmbp",
+    "hbpm",
+    "home bp"
+   ],
+   "unit": "mmHg",
+   "kind": "bp",
+   "has_rules": true
+  },
+  "BW": {
+   "aliases": [
+    "bw",
+    "wt",
+    "weight",
+    "น้ำหนัก"
+   ],
+   "unit": "kg",
+   "range": [
+    20,
+    300
+   ],
+   "has_rules": true
+  },
+  "BMI": {
+   "aliases": [
+    "bmi"
+   ],
+   "unit": "kg/m2",
+   "range": [
+    10,
+    80
+   ],
+   "has_rules": true
+  },
+  "Creatinine": {
+   "aliases": [
+    "creatinine",
+    "scr",
+    "cr"
+   ],
+   "unit": "mg/dL",
+   "range": [
+    0.1,
+    15
+   ],
+   "convert": {
+    "umol/l": {
+     "factor": 0.011312,
+     "offset": 0
+    },
+    "µmol/l": {
+     "factor": 0.011312,
+     "offset": 0
+    }
+   },
+   "has_rules": true
+  },
+  "eGFR": {
+   "aliases": [
+    "egfr",
+    "gfr"
+   ],
+   "unit": "mL/min/1.73m2",
+   "range": [
+    1,
+    200
+   ],
+   "has_rules": true
+  },
+  "LDL": {
+   "aliases": [
+    "ldl"
+   ],
+   "unit": "mg/dL",
+   "range": [
+    10,
+    500
+   ],
+   "has_rules": true
+  },
+  "HDL": {
+   "aliases": [
+    "hdl"
+   ],
+   "unit": "mg/dL",
+   "range": [
+    5,
+    200
+   ],
+   "has_rules": true
+  },
+  "TG": {
+   "aliases": [
+    "tg",
+    "triglyceride"
+   ],
+   "unit": "mg/dL",
+   "range": [
+    10,
+    5000
+   ],
+   "has_rules": true
+  },
+  "TC": {
+   "aliases": [
+    "tc",
+    "cholesterol"
+   ],
+   "unit": "mg/dL",
+   "range": [
+    50,
+    800
+   ],
+   "has_rules": true
+  },
+  "Hb": {
+   "aliases": [
+    "hb"
+   ],
+   "unit": "g/dL",
+   "range": [
+    1,
+    25
+   ],
+   "has_rules": true
+  },
+  "Hct": {
+   "aliases": [
+    "hct"
+   ],
+   "unit": "%",
+   "range": [
+    5,
+    70
+   ],
+   "has_rules": true
+  },
+  "INR": {
+   "aliases": [
+    "inr"
+   ],
+   "unit": "",
+   "range": [
+    0.5,
+    15
+   ],
+   "has_rules": true
+  },
+  "UACR": {
+   "aliases": [
+    "uacr",
+    "acr"
+   ],
+   "unit": "mg/g",
+   "range": [
+    0,
+    10000
+   ],
+   "has_rules": true
+  },
+  "MCV": {
+   "aliases": [
+    "mcv"
+   ],
+   "unit": "fL",
+   "range": [
+    40,
+    150
+   ],
+   "has_rules": true
+  },
+  "RBC": {
+   "aliases": [
+    "rbc"
+   ],
+   "unit": "",
+   "range": [
+    1,
+    9
+   ],
+   "has_rules": true
+  },
+  "RDW": {
+   "aliases": [
+    "rdw"
+   ],
+   "unit": "%",
+   "range": [
+    8,
+    40
+   ],
+   "has_rules": true
+  },
+  "INRgoal": {
+   "aliases": [
+    "goal",
+    "เป้า"
+   ],
+   "unit": "",
+   "kind": "range",
+   "range": [
+    0.5,
+    6
+   ],
+   "has_rules": true
+  },
+  "Waist": {
+   "aliases": [
+    "waist",
+    "รอบเอว"
+   ],
+   "unit": "cm",
+   "range": [
+    40,
+    200
+   ],
+   "has_rules": true
+  },
+  "Height": {
+   "aliases": [
+    "height",
+    "hgt",
+    "ส่วนสูง"
+   ],
+   "unit": "cm",
+   "range": [
+    100,
+    230
+   ],
+   "has_rules": false
+  },
+  "ALT": {
+   "aliases": [
+    "alt",
+    "sgpt"
+   ],
+   "unit": "U/L",
+   "range": [
+    3,
+    5000
+   ],
+   "has_rules": true
+  },
+  "AST": {
+   "aliases": [
+    "ast",
+    "sgot"
+   ],
+   "unit": "U/L",
+   "range": [
+    3,
+    5000
+   ],
+   "has_rules": true
+  },
+  "Plt": {
+   "aliases": [
+    "plt",
+    "platelet"
+   ],
+   "unit": "x10^3/µL",
+   "range": [
+    5,
+    2000
+   ],
+   "has_rules": true,
+   "auto_scale": {
+    "above": 2000,
+    "divide": 1000
+   }
+  },
+  "LSM": {
+   "aliases": [
+    "lsm",
+    "fibroscan",
+    "stiffness"
+   ],
+   "unit": "kPa",
+   "range": [
+    1.5,
+    75
+   ],
+   "has_rules": true
+  },
+  "CAP": {
+   "aliases": [
+    "cap"
+   ],
+   "unit": "dB/m",
+   "range": [
+    100,
+    400
+   ],
+   "has_rules": true
+  },
+  "LVEF": {
+   "aliases": [
+    "lvef",
+    "ef"
+   ],
+   "unit": "%",
+   "range": [
+    5,
+    90
+   ],
+   "has_rules": true
+  },
+  "mRS": {
+   "aliases": [
+    "mrs"
+   ],
+   "unit": "",
+   "range": [
+    0,
+    5
+   ],
+   "has_rules": true
+  },
+  "FEV1": {
+   "aliases": [
+    "fev1"
+   ],
+   "unit": "%",
+   "range": [
+    5,
+    150
+   ],
+   "has_rules": true
+  },
+  "FEV1FVC": {
+   "aliases": [
+    "fev1/fvc",
+    "fev1fvc"
+   ],
+   "unit": "",
+   "range": [
+    0.2,
+    1.0
+   ],
+   "has_rules": true,
+   "convert": {
+    "%": {
+     "factor": 0.01,
+     "offset": 0
+    }
+   }
+  },
+  "mMRC": {
+   "aliases": [
+    "mmrc"
+   ],
+   "unit": "",
+   "range": [
+    0,
+    4
+   ],
+   "has_rules": true
+  },
+  "CAT": {
+   "aliases": [
+    "cat"
+   ],
+   "unit": "",
+   "range": [
+    0,
+    40
+   ],
+   "has_rules": true
+  },
+  "Exac": {
+   "aliases": [
+    "exac",
+    "exacerbation"
+   ],
+   "unit": "",
+   "range": [
+    0,
+    50
+   ],
+   "has_rules": true
+  },
+  "ExacHosp": {
+   "aliases": [
+    "exachosp",
+    "exac hosp"
+   ],
+   "unit": "",
+   "range": [
+    0,
+    50
+   ],
+   "has_rules": true
+  },
+  "SpO2": {
+   "aliases": [
+    "spo2",
+    "o2sat",
+    "sat"
+   ],
+   "unit": "%",
+   "range": [
+    50,
+    100
+   ],
+   "has_rules": true
+  },
+  "ACT": {
+   "aliases": [
+    "act"
+   ],
+   "unit": "",
+   "range": [
+    5,
+    25
+   ],
+   "has_rules": true
+  },
+  "PEF": {
+   "aliases": [
+    "pef"
+   ],
+   "unit": "L/min",
+   "range": [
+    50,
+    900
+   ],
+   "has_rules": true
+  },
+  "PEFbest": {
+   "aliases": [
+    "pefbest",
+    "pef best"
+   ],
+   "unit": "L/min",
+   "range": [
+    50,
+    900
+   ],
+   "has_rules": true
+  },
+  "UMA": {
+   "aliases": [
+    "uma",
+    "microalbumin",
+    "urine microalbumin",
+    "u microalbumin"
+   ],
+   "unit": "mg/g",
+   "range": [
+    0,
+    10000
+   ],
+   "has_rules": true,
+   "require_unit": true
+  }
+ },
+ "units": [
+  "ml/min/1.73m2",
+  "mmol/mol",
+  "ml/min",
+  "mmol/l",
+  "µmol/l",
+  "umol/l",
+  "mg/dl",
+  "kg/m2",
+  "g/dl",
+  "mmhg",
+  "mg/g",
+  "kg",
+  "fl",
+  "%",
+  "kpa",
+  "db/m",
+  "u/l",
+  "cm",
+  "l/min",
+  "mg/l",
+  "mg/24h",
+  "mg/gcr",
+  "mg/g cr"
+ ],
+ "negation_prefixes": [
+  "ไม่มี",
+  "ไม่ได้",
+  "ไม่ค่อย",
+  "ไม่",
+  "ปฏิเสธ"
+ ],
+ "concepts": {
+  "dizziness": {
+   "label": "เวียนศีรษะ/มึนงง",
+   "phrases": [
+    "เวียนศีรษะ",
+    "เวียนหัว",
+    "มึนหัว",
+    "หน้ามืด"
+   ]
+  },
+  "vertigo": {
+   "label": "บ้านหมุน",
+   "phrases": [
+    "บ้านหมุน"
+   ]
+  },
+  "headache": {
+   "label": "ปวดศีรษะ",
+   "phrases": [
+    "ปวดหัว",
+    "ปวดศีรษะ"
+   ]
+  },
+  "palpitations": {
+   "label": "ใจสั่น",
+   "phrases": [
+    "ใจสั่น"
+   ]
+  },
+  "reduced_intake": {
+   "label": "รับประทานได้น้อยลง",
+   "phrases": [
+    "ฉันได้น้อย",
+    "ฉันน้อย",
+    "กินได้น้อย",
+    "กินน้อย",
+    "ทานได้น้อย",
+    "ทานน้อย",
+    "เบื่ออาหาร"
+   ]
+  },
+  "normal_intake": {
+   "label": "รับประทานได้ปกติ",
+   "phrases": [
+    "ฉันได้ดี",
+    "ฉันได้ปกติ",
+    "กินได้ดี",
+    "กินได้ปกติ",
+    "ทานได้ปกติ",
+    "ทานได้ดี"
+   ]
+  },
+  "edema": {
+   "label": "บวม",
+   "phrases": [
+    "ขาบวม",
+    "เท้าบวม",
+    "บวม"
+   ]
+  },
+  "dyspnea": {
+   "label": "เหนื่อย/หายใจลำบาก",
+   "phrases": [
+    "เหนื่อย",
+    "หอบ",
+    "หายใจลำบาก"
+   ]
+  },
+  "bleeding": {
+   "label": "เลือดออก/ฟกช้ำผิดปกติ",
+   "phrases": [
+    "เลือดกำเดา",
+    "เหงือกเลือดออก",
+    "เลือดออก",
+    "ฟกช้ำ",
+    "จ้ำเลือด",
+    "ถ่ายดำ",
+    "ถ่ายเป็นเลือด",
+    "ปัสสาวะเป็นเลือด"
+   ]
+  },
+  "chest_pain": {
+   "label": "เจ็บ/แน่นหน้าอก",
+   "phrases": [
+    "เจ็บหน้าอก",
+    "แน่นหน้าอก",
+    "เจ็บอก",
+    "แน่นอก"
+   ]
+  },
+  "stroke_signs": {
+   "label": "อ่อนแรง/ชา/พูดไม่ชัด/ปากเบี้ยว",
+   "phrases": [
+    "อ่อนแรง",
+    "ปากเบี้ยว",
+    "พูดไม่ชัด",
+    "แขนชา",
+    "ขาชา",
+    "ชาครึ่งซีก"
+   ]
+  },
+  "blurred_vision": {
+   "label": "ตามัว",
+   "phrases": [
+    "ตามัว",
+    "มองไม่ชัด",
+    "เห็นภาพซ้อน",
+    "ม่านบังตา",
+    "เห็นแสงวาบ"
+   ]
+  },
+  "resp_sx": {
+   "label": "ไอ/เสมหะ/หายใจมีเสียงวี้ด",
+   "phrases": [
+    "ไอ",
+    "เสมหะ",
+    "หายใจวี้ด",
+    "หายใจมีเสียงวี๊ด",
+    "วี้ด",
+    "วี๊ด"
+   ]
+  }
+ },
+ "smoking": {
+  "quit": [
+   "เลิกสูบ",
+   "หยุดสูบ",
+   "เลิกบุหรี่"
+  ],
+  "never": [
+   "ไม่เคยสูบ"
+  ],
+  "keywords": [
+   "สูบบุหรี่",
+   "สูบ",
+   "บุหรี่"
+  ],
+  "still": [
+   "ยังสูบ",
+   "ยัง"
+  ]
+ },
+ "tags": {
+  "_meta": "ผลตรวจหรือประวัติที่เป็นข้อความในบรรทัดปัญหา เช่น 'CKD : U/S KUB increased echo, no hydro' จับด้วยวลี (phrases) หรือ regex แพทย์เพิ่มคำได้ ตัวพิมพ์เล็ก/ใหญ่ไม่มีผล คำนำหน้า no/ไม่มี/ไม่พบ ทำให้เป็น 'ไม่มี'",
+  "kub_normal": {
+   "phrases": [
+    "normal kidney",
+    "normal size",
+    "unremarkable",
+    "kub normal",
+    "ไตปกติ"
+   ],
+   "regex": [],
+   "label": "U/S ไตปกติ"
+  },
+  "kub_echo": {
+   "phrases": [
+    "increased echo",
+    "increase echo",
+    "echogenic",
+    "parenchymal disease",
+    "↑echo",
+    "medical renal disease",
+    "เพิ่มขึ้นของ echo"
+   ],
+   "regex": [],
+   "label": "U/S ไต echo เพิ่ม"
+  },
+  "kub_small": {
+   "phrases": [
+    "small kidney",
+    "small kidneys",
+    "atrophic",
+    "atrophy",
+    "contracted",
+    "ไตเล็ก",
+    "cortical thinning",
+    "thin cortex"
+   ],
+   "regex": [],
+   "label": "U/S ไตเล็ก"
+  },
+  "kub_hydro": {
+   "phrases": [
+    "hydronephrosis",
+    "hydro",
+    "ไตบวมน้ำ",
+    "คั่งน้ำ"
+   ],
+   "regex": [],
+   "label": "U/S hydronephrosis"
+  },
+  "kub_stone": {
+   "phrases": [
+    "stone",
+    "calculi",
+    "calculus",
+    "nephrolithiasis",
+    "urolithiasis",
+    "นิ่ว"
+   ],
+   "regex": [],
+   "label": "U/S นิ่ว"
+  },
+  "kub_cyst": {
+   "phrases": [
+    "renal cyst",
+    "cyst",
+    "ซีสต์ที่ไต",
+    "ถุงน้ำที่ไต"
+   ],
+   "regex": [],
+   "label": "U/S cyst"
+  },
+  "kub_mass": {
+   "phrases": [
+    "renal mass",
+    "mass",
+    "tumor",
+    "tumour",
+    "ก้อนที่ไต"
+   ],
+   "regex": [],
+   "label": "U/S ก้อน"
+  },
+  "kub_asym": {
+   "phrases": [
+    "asymmetr",
+    "ไตสองข้างไม่เท่ากัน"
+   ],
+   "regex": [],
+   "label": "U/S ไตสองข้างไม่เท่ากัน"
+  },
+  "dr_none": {
+   "phrases": [
+    "no dr",
+    "no retinopathy",
+    "ไม่พบ dr",
+    "ไม่มี dr"
+   ],
+   "regex": [],
+   "label": "ไม่มี DR"
+  },
+  "dr_npdr_mild": {
+   "phrases": [],
+   "regex": [
+    "(?:npdr|non-?proliferative)[^,;]{0,14}mild|mild[^,;]{0,14}(?:npdr|non-?proliferative)",
+    "npdr\\s*\\(?1\\)?(?!\\d)"
+   ],
+   "label": "NPDR mild"
+  },
+  "dr_npdr_moderate": {
+   "phrases": [],
+   "regex": [
+    "(?:npdr|non-?proliferative)[^,;]{0,14}moderate|moderate[^,;]{0,14}(?:npdr|non-?proliferative)"
+   ],
+   "label": "NPDR moderate"
+  },
+  "dr_npdr_severe": {
+   "phrases": [],
+   "regex": [
+    "(?:npdr|non-?proliferative)[^,;]{0,14}severe|severe[^,;]{0,14}(?:npdr|non-?proliferative)"
+   ],
+   "label": "NPDR severe"
+  },
+  "dr_npdr": {
+   "phrases": [],
+   "regex": [
+    "npdr"
+   ],
+   "label": "NPDR (ไม่ระบุระดับ)"
+  },
+  "dr_pdr": {
+   "phrases": [],
+   "regex": [
+    "(?<![a-z])pdr",
+    "(?<!non)(?<!non-)proliferative"
+   ],
+   "label": "PDR"
+  },
+  "dr_dme": {
+   "phrases": [
+    "dme",
+    "macular edema",
+    "macular oedema"
+   ],
+   "regex": [],
+   "label": "DME"
+  },
+  "dr_treated": {
+   "phrases": [
+    "prp",
+    "laser",
+    "anti-vegf",
+    "antivegf",
+    "intravitreal",
+    "ฉีดยาเข้าวุ้นตา",
+    "ยิงเลเซอร์"
+   ],
+   "regex": [],
+   "label": "เคยรักษาจอตา"
+  },
+  "us_steatosis": {
+   "phrases": [
+    "fatty liver",
+    "steatosis",
+    "bright liver",
+    "ไขมันพอกตับ"
+   ],
+   "regex": [],
+   "label": "U/S ตับ ไขมันพอก"
+  },
+  "us_cirrhosis": {
+   "phrases": [
+    "cirrhosis",
+    "cirrhotic",
+    "coarse echo",
+    "nodular liver",
+    "ตับแข็ง"
+   ],
+   "regex": [],
+   "label": "U/S ตับแข็ง"
+  },
+  "cad_mi": {
+   "phrases": [
+    "stemi",
+    "nstemi",
+    "acs",
+    "myocardial infarction",
+    "กล้ามเนื้อหัวใจตาย"
+   ],
+   "regex": [
+    "(?<![a-z])mi(?![a-z])"
+   ],
+   "label": "ประวัติ MI/ACS"
+  },
+  "cad_revasc": {
+   "phrases": [
+    "pci",
+    "stent",
+    "cabg",
+    "bypass",
+    "ballooning",
+    "ใส่ขดลวด",
+    "ผ่าตัดบายพาส"
+   ],
+   "regex": [],
+   "label": "PCI/stent/CABG"
+  },
+  "stroke_ischemic": {
+   "phrases": [
+    "ischemic",
+    "ischaemic",
+    "infarct",
+    "tia",
+    "สมองขาดเลือด",
+    "สมองตีบ"
+   ],
+   "regex": [
+    "(?<![a-z])is(?![a-z])"
+   ],
+   "label": "Stroke ขาดเลือด/TIA"
+  },
+  "stroke_hemorrhagic": {
+   "phrases": [
+    "hemorrhag",
+    "haemorrhag",
+    "sah",
+    "เลือดออกในสมอง",
+    "เลือดออกใต้"
+   ],
+   "regex": [
+    "(?<![a-z])ich(?![a-z])"
+   ],
+   "label": "Stroke เลือดออก"
+  },
+  "med_statin": {
+   "phrases": [
+    "statin",
+    "atorvastatin",
+    "rosuvastatin",
+    "simvastatin",
+    "pravastatin",
+    "pitavastatin",
+    "สแตติน"
+   ],
+   "regex": [],
+   "label": "ยา statin"
+  },
+  "med_antiplatelet": {
+   "phrases": [
+    "aspirin",
+    "asa",
+    "clopidogrel",
+    "ticagrelor",
+    "prasugrel",
+    "antiplatelet",
+    "ยาต้านเกล็ดเลือด",
+    "แอสไพริน"
+   ],
+   "regex": [],
+   "label": "ยาต้านเกล็ดเลือด"
+  }
+ },
+ "filler_words": [
+  "u/s kub",
+  "us kub",
+  "u/s",
+  "kub",
+  "s/p",
+  "status post",
+  "stroke",
+  "with",
+  "and",
+  "of",
+  "grade",
+  "kidney",
+  "kidneys",
+  "both",
+  "bilateral"
+ ]
+}

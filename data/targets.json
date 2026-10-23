@@ -1,0 +1,287 @@
+{
+ "_meta": {
+  "version": "0.1-draft",
+  "status": "DRAFT — ยังไม่ผ่านการตรวจทานโดยแพทย์",
+  "note": "ค่าทั้งหมดเป็นค่าตั้งต้นตามแนวทางสากลทั่วไป เพื่อให้ระบบทำงานได้ แพทย์ต้องตรวจและแก้ให้ตรงกับแนวทางที่ รพ. ใช้ก่อนใช้งานจริง ช่อง source ต้องระบุฉบับที่อ้างอิง"
+ },
+ "dm": {
+  "hba1c": {
+   "target_max": 7.0,
+   "mild_high_below": 8.0,
+   "high_below": 10.0,
+   "improving_delta": -0.5,
+   "worsening_delta": 0.5,
+   "rapid_drop": 2.0,
+   "source": "ADA Standards of Care / แนวทางเวชปฏิบัติเบาหวานของไทย (ต้องระบุฉบับ)",
+   "needs_citation": true
+  },
+  "fbs": {
+   "target": [
+    80,
+    130
+   ],
+   "low_below": 70,
+   "slightly_low_below": 80,
+   "high_from": 180,
+   "stable_pct": 10,
+   "source": "ADA Standards of Care (preprandial glucose 80-130 mg/dL) (ต้องระบุฉบับ)",
+   "needs_citation": true
+  }
+ },
+ "ht": {
+  "clinic": {
+   "target_general": [
+    140,
+    90
+   ],
+   "target_comorbid": [
+    130,
+    80
+   ],
+   "crisis": [
+    180,
+    120
+   ],
+   "source": "แนวทางเวชปฏิบัติความดันโลหิตสูงของไทย / ESC-ESH / ACC-AHA (ต้องระบุฉบับ)",
+   "needs_citation": true
+  },
+  "home": {
+   "target_general": [
+    135,
+    85
+   ],
+   "target_comorbid": [
+    130,
+    80
+   ],
+   "source": "เกณฑ์ความดันที่บ้านตามแนวทางสากล (ต้องระบุฉบับ)",
+   "needs_citation": true
+  },
+  "discordance": {
+   "clinic_high": [
+    140,
+    90
+   ],
+   "home_high": [
+    135,
+    85
+   ]
+  }
+ },
+ "obesity": {
+  "bmi_asian": {
+   "underweight_below": 18.5,
+   "normal_below": 23.0,
+   "overweight_below": 25.0,
+   "obese1_below": 30.0,
+   "source": "เกณฑ์ BMI ของ WHO Asia-Pacific / กรมอนามัยไทย (ต้องระบุฉบับ)",
+   "needs_citation": true
+  },
+  "weight_change": {
+   "significant_pct": 5.0
+  },
+  "waist": {
+   "male_from": 90,
+   "female_from": 80,
+   "source": "เกณฑ์รอบเอวสำหรับคนเอเชีย (IDF / กรมอนามัยไทย) (ต้องระบุฉบับ)",
+   "needs_citation": true
+  }
+ },
+ "ckd": {
+  "egfr_stage": {
+   "g1_from": 90,
+   "g2_from": 60,
+   "g3a_from": 45,
+   "g3b_from": 30,
+   "g4_from": 15,
+   "source": "KDIGO CKD staging (ต้องระบุฉบับ)",
+   "needs_citation": true
+  },
+  "decline_flag": 10,
+  "crosscheck": {
+   "tolerance_pct": 15,
+   "tolerance_abs": 5
+  },
+  "albuminuria": {
+   "a2_from": 30,
+   "source": "KDIGO: A1 <30, A2 30-300, A3 >300 mg/g (ต้องระบุฉบับ)",
+   "needs_citation": true,
+   "a3_above": 300
+  }
+ },
+ "lifestyle": {
+  "quitline": "1600",
+  "quitline_note": "สายด่วนเลิกบุหรี่แห่งชาติ (ต้องตรวจสอบเบอร์ก่อนใช้งานจริง)"
+ },
+ "dlp": {
+  "ldl": {
+   "goal_default": 130,
+   "goal_dm_or_ckd": 100,
+   "near_margin": 30,
+   "very_high_from": 190,
+   "trend_pct": 15,
+   "source": "NCEP ATP III / แนวทางไขมันของไทย / ADA (เป้า LDL จริงขึ้นกับความเสี่ยง ASCVD) (ต้องระบุฉบับ) · เป้า ASCVD 70 ตามแนวทางสากลทั่วไป (ต้องระบุฉบับ)",
+   "needs_citation": true,
+   "goal_ascvd": 70
+  },
+  "tg": {
+   "borderline_from": 150,
+   "high_from": 200,
+   "very_high_from": 500,
+   "source": "NCEP ATP III / AHA (ต้องระบุฉบับ)",
+   "needs_citation": true
+  },
+  "hdl": {
+   "low_below_male": 40,
+   "low_below_female": 50,
+   "source": "NCEP ATP III (ต้องระบุฉบับ)",
+   "needs_citation": true
+  },
+  "tc": {
+   "borderline_from": 200,
+   "high_from": 240,
+   "source": "NCEP ATP III (ต้องระบุฉบับ)",
+   "needs_citation": true
+  }
+ },
+ "anemia": {
+  "hb": {
+   "anemia_below_male": 13.0,
+   "anemia_below_female": 12.0,
+   "mild_from": 11.0,
+   "moderate_from": 8.0,
+   "trend_delta": 1.0,
+   "source": "WHO (คนไม่ตั้งครรภ์ อายุ ≥ 15 ปี): ซีดเมื่อ Hb < 13 (ชาย) / < 12 (หญิง); เล็กน้อย 11-ต่ำกว่าเกณฑ์, ปานกลาง 8-10.9, รุนแรง < 8 (ต้องระบุฉบับ)",
+   "needs_citation": true
+  },
+  "mcv": {
+   "micro_below": 80,
+   "macro_above": 100,
+   "source": "เกณฑ์ MCV ทั่วไป (ต้องระบุเกณฑ์ที่ห้องปฏิบัติการของ รพ. ใช้)",
+   "needs_citation": true
+  },
+  "rdw_high_above": 14.5,
+  "mentzer_cut": 13,
+  "crosscheck": {
+   "mcv_tolerance_pct": 10,
+   "hct_hb_ratio": [
+    2.7,
+    3.3
+   ]
+  }
+ },
+ "warfarin": {
+  "default_goal": [
+   2.0,
+   3.0
+  ],
+  "alert_above": 4.5,
+  "source": "เป้า INR ขึ้นกับข้อบ่งชี้ (เช่น AF/VTE 2.0-3.0, ลิ้นหัวใจเทียมบางชนิด 2.5-3.5); เกณฑ์เตือน INR สูงมากตามแนวทางของ รพ. (ต้องระบุฉบับ)",
+  "needs_citation": true
+ },
+ "mafld": {
+  "enzymes": {
+   "uln": 40,
+   "high_multiple": 3,
+   "source": "ค่าสูงสุดปกติของ ALT/AST ขึ้นกับห้องปฏิบัติการและเพศ (ต้องใช้ค่าของ รพ.)",
+   "needs_citation": true
+  },
+  "fib4": {
+   "min_age": 35,
+   "older_age": 65,
+   "low_below": 1.3,
+   "low_below_older": 2.0,
+   "high_above": 2.67,
+   "source": "FIB-4 = อายุ x AST / (เกล็ดเลือด x10^3/µL x รากที่สองของ ALT); เกณฑ์ 1.3/2.67 (2.0 ถ้าอายุ >=65) (ต้องระบุฉบับ)",
+   "needs_citation": true
+  },
+  "lsm": {
+   "low_below": 8,
+   "high_from": 12,
+   "source": "Fibroscan LSM (probe M) <8 kPa โอกาสพังผืดระยะลุกลามต่ำ, >=12 สูง; เกณฑ์ต่างกันตามโรคและ probe (ต้องระบุฉบับ)",
+   "needs_citation": true
+  },
+  "cap": {
+   "s1_from": 248,
+   "s2_from": 268,
+   "s3_from": 280,
+   "source": "เกณฑ์ CAP ต่างกันตามงานวิจัยและรุ่นเครื่อง (ต้องระบุฉบับ)",
+   "needs_citation": true
+  }
+ },
+ "cad": {
+  "lvef": {
+   "reduced_to": 40,
+   "mild_to": 49,
+   "source": "ESC 2021: EF <=40 ลดลง, 41-49 ลดลงเล็กน้อย, >=50 ปกติ (ต้องระบุฉบับ)",
+   "needs_citation": true
+  }
+ },
+ "spo2": {
+  "ok_from": 95,
+  "alert_below": 90,
+  "copd_alert_to": 88,
+  "source": "ค่าทั่วไป; ใน COPD เป้าหมายต่างออกไป แพทย์กำหนด (ต้องระบุฉบับ)",
+  "needs_citation": true
+ },
+ "copd": {
+  "gold": {
+   "g1_from": 80,
+   "g2_from": 50,
+   "g3_from": 30,
+   "obstruction_below": 0.7,
+   "source": "GOLD: FEV1 %pred หลังพ่นยา และ FEV1/FVC <0.70 (ต้องระบุฉบับ)",
+   "needs_citation": true
+  },
+  "symptoms": {
+   "mmrc_high_from": 2,
+   "cat_high_from": 10,
+   "source": "GOLD ABE: mMRC>=2 หรือ CAT>=10 = อาการมาก",
+   "needs_citation": true
+  },
+  "exac": {
+   "frequent_from": 2,
+   "hosp_from": 1
+  }
+ },
+ "asthma": {
+  "act": {
+   "good_from": 20,
+   "partly_from": 16,
+   "source": "ACT >=20 ควบคุมได้ดี, 16-19 ไม่ดีนัก, <=15 ควบคุมไม่ได้",
+   "needs_citation": true
+  },
+  "pef": {
+   "green_from": 80,
+   "yellow_from": 50,
+   "source": "โซน PEF % ของค่าดีที่สุดส่วนตัว (ต้องระบุฉบับ)",
+   "needs_citation": true
+  }
+ },
+ "thai_cv": {
+  "categories": {
+   "moderate_from": 10,
+   "high_from": 20,
+   "very_high_from": 30,
+   "source": "Thai CV Risk Score (ราชวิทยาลัยฯ / รามาธิบดี): <10, 10-<20, 20-<30, >=30 % (ต้องตรวจกับเครื่องมือจริง)",
+   "needs_citation": true
+  },
+  "applicable_age": [
+   35,
+   70
+  ],
+  "required": [
+   "age",
+   "sex",
+   "smoking",
+   "sbp"
+  ],
+  "diabetes_assumed_no_if_unlisted": true,
+  "one_of": [
+   "TC",
+   "BMI",
+   "Waist"
+  ],
+  "check_note": "รายการข้อมูลที่ต้องมีเป็นค่าตั้งต้น ตรวจกับเครื่องมือเวอร์ชันที่ใช้จริงก่อนเชื่อ"
+ }
+}

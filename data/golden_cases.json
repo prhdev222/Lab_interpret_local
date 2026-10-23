@@ -1,0 +1,245 @@
+{
+ "_meta": {
+  "note": "ตัวอย่างบันทึกสังเคราะห์ ห้ามใส่ข้อมูลผู้ป่วยจริง ใช้ตรวจว่าการแก้เกณฑ์/กฎทำให้ผลเปลี่ยนตรงไหน"
+ },
+ "cases": [
+  {
+   "id": "g-1",
+   "note": "DM : HbA1c 6.8",
+   "age": 60,
+   "sex": "M",
+   "confirmed": false
+  },
+  {
+   "id": "g-2",
+   "note": "DM : HbA1c 7.4",
+   "age": 60,
+   "sex": "M",
+   "confirmed": false
+  },
+  {
+   "id": "g-3",
+   "note": "DM : HbA1c 9.2",
+   "age": 60,
+   "sex": "F",
+   "confirmed": false
+  },
+  {
+   "id": "g-4",
+   "note": "DM : HbA1c 11",
+   "age": 55,
+   "sex": "M",
+   "confirmed": false
+  },
+  {
+   "id": "g-5",
+   "note": "DM : FBS 95",
+   "age": 60,
+   "sex": "M",
+   "confirmed": false
+  },
+  {
+   "id": "g-6",
+   "note": "DM : FBS 150",
+   "age": 60,
+   "sex": "F",
+   "confirmed": false
+  },
+  {
+   "id": "g-7",
+   "note": "DM : FBS 65",
+   "age": 70,
+   "sex": "M",
+   "confirmed": false
+  },
+  {
+   "id": "g-8",
+   "note": "HT : BP 125/75",
+   "age": 50,
+   "sex": "M",
+   "confirmed": false
+  },
+  {
+   "id": "g-9",
+   "note": "HT : BP 135/85",
+   "age": 55,
+   "sex": "F",
+   "confirmed": false
+  },
+  {
+   "id": "g-10",
+   "note": "HT : BP 150/90",
+   "age": 60,
+   "sex": "M",
+   "confirmed": false
+  },
+  {
+   "id": "g-11",
+   "note": "DM : FBS 100\nHT : BP 135/85",
+   "age": 62,
+   "sex": "M",
+   "confirmed": false
+  },
+  {
+   "id": "g-12",
+   "note": "HT : BP 150/90 HMBP 125/78",
+   "age": 60,
+   "sex": "M",
+   "confirmed": false
+  },
+  {
+   "id": "g-13",
+   "note": "Obesity : BMI 21",
+   "age": 40,
+   "sex": "F",
+   "confirmed": false
+  },
+  {
+   "id": "g-14",
+   "note": "Obesity : BMI 27",
+   "age": 45,
+   "sex": "M",
+   "confirmed": false
+  },
+  {
+   "id": "g-15",
+   "note": "Obesity : BMI 32 Waist 95",
+   "age": 45,
+   "sex": "M",
+   "confirmed": false
+  },
+  {
+   "id": "g-16",
+   "note": "CKD : Cr 1.4 eGFR 55",
+   "age": 65,
+   "sex": "M",
+   "confirmed": false
+  },
+  {
+   "id": "g-17",
+   "note": "CKD : eGFR 38 UACR 120 U/S KUB increased echo, no hydro",
+   "age": 68,
+   "sex": "F",
+   "confirmed": false
+  },
+  {
+   "id": "g-18",
+   "note": "DM : UACR 25",
+   "age": 58,
+   "sex": "M",
+   "confirmed": false
+  },
+  {
+   "id": "g-19",
+   "note": "DM/DN : UMA 250 mg/g",
+   "age": 60,
+   "sex": "M",
+   "confirmed": false
+  },
+  {
+   "id": "g-20",
+   "note": "DLP : LDL 95",
+   "age": 55,
+   "sex": "M",
+   "confirmed": false
+  },
+  {
+   "id": "g-21",
+   "note": "DLP : LDL 145 TG 180 HDL 38 TC 235",
+   "age": 52,
+   "sex": "M",
+   "confirmed": false
+  },
+  {
+   "id": "g-22",
+   "note": "CAD : s/p PCI\nDLP : LDL 85",
+   "age": 66,
+   "sex": "M",
+   "confirmed": false
+  },
+  {
+   "id": "g-23",
+   "note": "Stroke : ischemic\nDLP : LDL 110",
+   "age": 70,
+   "sex": "F",
+   "confirmed": false
+  },
+  {
+   "id": "g-24",
+   "note": "CBC : Hb 10.8 MCV 72 RBC 5.2",
+   "age": 45,
+   "sex": "F",
+   "confirmed": false
+  },
+  {
+   "id": "g-25",
+   "note": "CBC : Hb 12.5",
+   "age": 50,
+   "sex": "M",
+   "confirmed": false
+  },
+  {
+   "id": "g-26",
+   "note": "Warfarin : INR 2.4 goal 2-3",
+   "age": 72,
+   "sex": "M",
+   "confirmed": false
+  },
+  {
+   "id": "g-27",
+   "note": "Warfarin : INR 4.8 goal 2-3",
+   "age": 72,
+   "sex": "F",
+   "confirmed": false
+  },
+  {
+   "id": "g-28",
+   "note": "MAFLD : ALT 85 AST 60 Plt 180 LSM 9.8kPa CAP 290dB/m",
+   "age": 52,
+   "sex": "M",
+   "confirmed": false
+  },
+  {
+   "id": "g-29",
+   "note": "MAFLD : ALT 30 AST 25 Plt 300",
+   "age": 45,
+   "sex": "F",
+   "confirmed": false
+  },
+  {
+   "id": "g-30",
+   "note": "COPD : FEV1 45% FEV1/FVC 0.6 mMRC 2 Exac 2",
+   "age": 68,
+   "sex": "M",
+   "confirmed": false
+  },
+  {
+   "id": "g-31",
+   "note": "Asthma : ACT 17 PEF 300 PEFbest 450",
+   "age": 35,
+   "sex": "F",
+   "confirmed": false
+  },
+  {
+   "id": "g-32",
+   "note": "DR : NPDR moderate, DME\nDM : HbA1c 8.5",
+   "age": 58,
+   "sex": "M",
+   "confirmed": false
+  },
+  {
+   "id": "g-33",
+   "note": "DM : FBS 100\n22/10/69 : เวียนศีรษะ ใจสั่น ฉันได้น้อย ฉัน 1 มื้อ",
+   "age": 70,
+   "sex": "M",
+   "confirmed": false
+  },
+  {
+   "id": "g-34",
+   "note": "HT : BP 120/70 SpO2 97",
+   "age": 50,
+   "sex": "M",
+   "confirmed": false
+  }
+ ]
+}

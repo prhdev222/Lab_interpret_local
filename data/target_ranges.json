@@ -1,0 +1,296 @@
+{
+ "_meta": {
+  "note": "ช่วงที่พบทั่วไปของแต่ละเกณฑ์ ตั้งต้นโดยผู้พัฒนา ไม่ใช่แนวทางทางการ ใช้เตือนเมื่อแก้ค่าออกนอกช่วง (ไม่ห้าม เพราะแนวทางเปลี่ยนได้) แพทย์ตรวจและแก้ไฟล์นี้ได้",
+  "status": "DRAFT"
+ },
+ "ranges": {
+  "dm.hba1c.target_max": [
+   6.0,
+   8.5
+  ],
+  "dm.hba1c.mild_high_below": [
+   7.0,
+   9.0
+  ],
+  "dm.hba1c.high_below": [
+   8.5,
+   11
+  ],
+  "dm.fbs.target[0]": [
+   70,
+   100
+  ],
+  "dm.fbs.target[1]": [
+   100,
+   150
+  ],
+  "dm.fbs.low_below": [
+   60,
+   75
+  ],
+  "dm.fbs.high_from": [
+   160,
+   250
+  ],
+  "ht.clinic.target_general[0]": [
+   120,
+   150
+  ],
+  "ht.clinic.target_general[1]": [
+   70,
+   95
+  ],
+  "ht.clinic.target_comorbid[0]": [
+   110,
+   140
+  ],
+  "ht.clinic.target_comorbid[1]": [
+   65,
+   90
+  ],
+  "ht.clinic.crisis[0]": [
+   160,
+   200
+  ],
+  "ht.clinic.crisis[1]": [
+   100,
+   130
+  ],
+  "ht.home.target_general[0]": [
+   120,
+   140
+  ],
+  "ht.home.target_general[1]": [
+   70,
+   90
+  ],
+  "ht.home.target_comorbid[0]": [
+   110,
+   140
+  ],
+  "ht.home.target_comorbid[1]": [
+   65,
+   90
+  ],
+  "obesity.bmi_asian.underweight_below": [
+   17,
+   19.5
+  ],
+  "obesity.bmi_asian.normal_below": [
+   22,
+   25
+  ],
+  "obesity.bmi_asian.overweight_below": [
+   24,
+   28
+  ],
+  "obesity.bmi_asian.obese1_below": [
+   28,
+   35
+  ],
+  "obesity.waist.male_from": [
+   85,
+   102
+  ],
+  "obesity.waist.female_from": [
+   75,
+   90
+  ],
+  "ckd.egfr_stage.g1_from": [
+   85,
+   95
+  ],
+  "ckd.egfr_stage.g2_from": [
+   55,
+   65
+  ],
+  "ckd.egfr_stage.g3a_from": [
+   40,
+   50
+  ],
+  "ckd.egfr_stage.g3b_from": [
+   25,
+   35
+  ],
+  "ckd.egfr_stage.g4_from": [
+   10,
+   20
+  ],
+  "ckd.albuminuria.a2_from": [
+   20,
+   40
+  ],
+  "ckd.albuminuria.a3_above": [
+   250,
+   350
+  ],
+  "dlp.ldl.goal_default": [
+   70,
+   160
+  ],
+  "dlp.ldl.goal_dm_or_ckd": [
+   55,
+   130
+  ],
+  "dlp.ldl.goal_ascvd": [
+   40,
+   100
+  ],
+  "dlp.ldl.very_high_from": [
+   160,
+   220
+  ],
+  "dlp.tg.borderline_from": [
+   120,
+   170
+  ],
+  "dlp.tg.high_from": [
+   180,
+   250
+  ],
+  "dlp.tg.very_high_from": [
+   400,
+   600
+  ],
+  "dlp.hdl.low_below_male": [
+   35,
+   45
+  ],
+  "dlp.hdl.low_below_female": [
+   45,
+   55
+  ],
+  "dlp.tc.borderline_from": [
+   180,
+   220
+  ],
+  "dlp.tc.high_from": [
+   220,
+   260
+  ],
+  "anemia.hb.anemia_below_male": [
+   12,
+   14
+  ],
+  "anemia.hb.anemia_below_female": [
+   11,
+   13
+  ],
+  "anemia.mcv.micro_below": [
+   75,
+   85
+  ],
+  "anemia.mcv.macro_above": [
+   95,
+   105
+  ],
+  "warfarin.default_goal[0]": [
+   1.5,
+   2.5
+  ],
+  "warfarin.default_goal[1]": [
+   2.5,
+   4.0
+  ],
+  "warfarin.alert_above": [
+   4,
+   6
+  ],
+  "mafld.fib4.low_below": [
+   1.0,
+   1.6
+  ],
+  "mafld.fib4.high_above": [
+   2.3,
+   3.0
+  ],
+  "mafld.fib4.low_below_older": [
+   1.8,
+   2.2
+  ],
+  "mafld.lsm.low_below": [
+   6,
+   10
+  ],
+  "mafld.lsm.high_from": [
+   10,
+   16
+  ],
+  "mafld.cap.s1_from": [
+   220,
+   280
+  ],
+  "mafld.cap.s2_from": [
+   240,
+   300
+  ],
+  "mafld.cap.s3_from": [
+   260,
+   340
+  ],
+  "mafld.enzymes.uln": [
+   25,
+   50
+  ],
+  "cad.lvef.reduced_to": [
+   35,
+   45
+  ],
+  "cad.lvef.mild_to": [
+   45,
+   55
+  ],
+  "spo2.ok_from": [
+   92,
+   98
+  ],
+  "spo2.alert_below": [
+   85,
+   93
+  ],
+  "spo2.copd_alert_to": [
+   85,
+   90
+  ],
+  "copd.gold.g1_from": [
+   75,
+   85
+  ],
+  "copd.gold.g2_from": [
+   45,
+   55
+  ],
+  "copd.gold.g3_from": [
+   25,
+   35
+  ],
+  "asthma.act.good_from": [
+   19,
+   21
+  ],
+  "asthma.act.partly_from": [
+   14,
+   18
+  ],
+  "asthma.pef.green_from": [
+   75,
+   85
+  ],
+  "asthma.pef.yellow_from": [
+   45,
+   60
+  ],
+  "thai_cv.categories.moderate_from": [
+   5,
+   15
+  ],
+  "thai_cv.categories.high_from": [
+   15,
+   25
+  ],
+  "thai_cv.categories.very_high_from": [
+   25,
+   40
+  ]
+ }
+}

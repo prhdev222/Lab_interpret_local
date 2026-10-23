@@ -1,0 +1,11 @@
+# never commit patient-related or local-only files
+data/app.db*
+data/*.bak
+data/*.tmp
+learned_terms*.json
+my_notes*
+*.jsonl
+__pycache__/
+*.pyc
+.DS_Store
+data/learning_log.json*

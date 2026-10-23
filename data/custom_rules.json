@@ -1,0 +1,52 @@
+{
+  "_meta": {
+    "note": "กฎที่แพทย์เพิ่ม/ปิดเอง ตัวอย่างด้านล่างปิดไว้ (enabled: false) เปลี่ยนเป็น true เพื่อใช้ ตรวจไฟล์นี้ด้วย python3 tools/check_rules.py ก่อนใช้ทุกครั้ง กฎที่ผิดจะถูกข้ามและแจ้งแพทย์ ไม่ทำให้ระบบหยุด",
+    "status": "DRAFT — กฎที่เพิ่มเองต้องผ่านการตรวจเหมือนกฎมาตรฐาน (ดู docs/RULES_REVIEW.md หัวข้อ 9)"
+  },
+  "disable_builtin": [],
+  "rules": [
+    {
+      "id": "example.ldl_with_dm",
+      "enabled": false,
+      "problem": "Dyslipidemia",
+      "level": "attention",
+      "when": {
+        "all": [
+          {
+            "param": "LDL",
+            "op": ">=",
+            "value": 160
+          },
+          {
+            "problem": "DM"
+          }
+        ]
+      },
+      "patient": {
+        "short": "LDL {LDL} สูงในผู้ที่เป็นเบาหวาน ควรปรึกษาแพทย์",
+        "long": "ค่า LDL ของ{ท่าน}คือ {LDL} mg/dL ซึ่งสูงในผู้ที่เป็นเบาหวาน ควรปรึกษาแพทย์เรื่องการลดไขมัน"
+      },
+      "clinician": "LDL {LDL} ร่วมกับ DM (กฎตัวอย่างที่เพิ่มเอง)"
+    },
+    {
+      "id": "example.low_bp_dizzy",
+      "enabled": false,
+      "problem": "HT",
+      "level": "info",
+      "when": {
+        "all": [
+          {
+            "param": "BP",
+            "field": "sys",
+            "op": "<",
+            "value": 100
+          },
+          {
+            "concept": "dizziness"
+          }
+        ]
+      },
+      "clinician": "BP บน {BP.sys} ร่วมกับเวียนศีรษะ ตรวจสอบความดันต่ำและยาที่ใช้ (กฎตัวอย่างที่เพิ่มเอง)"
+    }
+  ]
+}
