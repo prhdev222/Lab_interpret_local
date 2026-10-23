@@ -70,6 +70,16 @@ class Page(unittest.TestCase):
         self.assertEqual(grid.count("<div"), grid.count("</div>"), "pattern-grid must be closed before the monk toggle")
         self.assertLess(HTML.index('id="monkToggle"'), HTML.index('id="labValues"'))
 
+    def test_every_admin_tool_is_inside_the_single_settings_menu(self):
+        menu = re.search(r'<div class="menu-list" id="adminMenuList">(.*?)</div>\s*</div>', HTML, re.S).group(1)
+        tools = ("rulesBtn", "targetsBtn", "goldenBtn", "signBtn", "learnBtn", "statsBtn", "adminBtn")
+        for t in tools:
+            self.assertIn(f'id="{t}"', menu, t)
+        header = HTML[HTML.index('<div class="header-right">'):HTML.index('<!-- ===== RULES MODAL')]
+        self.assertEqual(len(re.findall(r'class="hdr-btn"', header.replace(menu, ""))), 2)                  # only the menu button and logout stay on the bar
+        self.assertIn('onclick="doLogout()"', header.replace(menu, ""))
+        self.assertIn("menuWrap').style.display = 'block'", JS); self.assertIn("function toggleMenu(", JS); self.assertIn("Escape", JS)
+
     def test_draft_warning_is_wired(self):
         self.assertIn("draftWarn", HTML); self.assertIn("DRAFT", JS)
 

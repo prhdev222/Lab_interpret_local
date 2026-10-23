@@ -181,6 +181,40 @@ sub("for (const d of data.daily) { html += `<tr><td>${d.day}</td><td>${d.count}<
 sub("html += `<tr><td>${u.display_name}</td><td>${u.username}</td><td>${u.count}</td></tr>`", "html += `<tr><td>${esc(u.display_name)}</td><td>${esc(u.username)}</td><td>${esc(u.count)}</td></tr>`")
 sub("html += `<tr><td>${patternNames[p.pattern] || p.pattern}</td><td>${p.count}</td></tr>`", "html += `<tr><td>${esc(patternNames[p.pattern] || p.pattern)}</td><td>${esc(p.count)}</td></tr>`")
 
+# ---- 9. one "⚙️ ตั้งค่า" menu for every admin tool (keeps the header short on small screens)
+sub("</style>", """
+    .menu-wrap { position: relative; display: none; }
+    .menu-list { display: none; position: absolute; right: 0; top: calc(100% + 6px); min-width: 220px; background: #fff; border: 1px solid var(--border); border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18); padding: 6px; z-index: 150; flex-direction: column; gap: 2px; }
+    .menu-list.open { display: flex; }
+    .menu-list .hdr-btn { display: flex !important; width: 100%; justify-content: flex-start; background: transparent; color: #1F2937; border: none; text-align: left; padding: 9px 12px; border-radius: 8px; }
+    .menu-list .hdr-btn:hover { background: #EEF2F0; }
+  </style>""")
+cut('    <div class="header-right">', '      <button class="hdr-btn" onclick="doLogout()">', """    <div class="header-right">
+      <span class="monk-badge" id="monkBadge">🙏 ภาษาสงฆ์</span>
+      <div class="menu-wrap" id="menuWrap">
+        <button class="hdr-btn" onclick="toggleMenu()" id="menuBtn">⚙️ ตั้งค่า ▾</button>
+        <div class="menu-list" id="adminMenuList">
+          <button class="hdr-btn" onclick="showRulesModal()" id="rulesBtn">📐 กฎ (เพิ่ม/ปิดกฎ)</button>
+          <button class="hdr-btn" onclick="showTargetsModal()" id="targetsBtn">🎯 เกณฑ์และค่าเป้าหมาย</button>
+          <button class="hdr-btn" onclick="showGoldenModal()" id="goldenBtn">✅ บันทึกตัวอย่าง</button>
+          <button class="hdr-btn" onclick="showSignModal()" id="signBtn">✍️ ลงนามรับรอง</button>
+          <button class="hdr-btn" onclick="showLearnModal()" id="learnBtn">🧠 เรียนรู้ตัวย่อ</button>
+          <button class="hdr-btn" onclick="showStatsModal()" id="statsBtn">📊 สถิติการใช้งาน</button>
+          <button class="hdr-btn" onclick="showAdminModal()" id="adminBtn">👥 จัดการผู้ใช้</button>
+        </div>
+      </div>
+""")
+sub("document.getElementById('statsBtn').style.display = 'inline-flex';", "document.getElementById('statsBtn').style.display = 'inline-flex'; document.getElementById('menuWrap').style.display = 'block';")
+sub("document.getElementById('statsBtn').style.display = 'none';", "document.getElementById('statsBtn').style.display = 'none'; document.getElementById('menuWrap').style.display = 'none'; closeMenu();")
+sub("    // ===== Admin =====", """    // ===== Admin menu =====
+    function closeMenu() { document.getElementById('adminMenuList').classList.remove('open'); }
+    function toggleMenu() { document.getElementById('adminMenuList').classList.toggle('open'); }
+    document.addEventListener('click', e => { if (!e.target.closest('#menuWrap') || e.target.closest('#adminMenuList .hdr-btn')) closeMenu(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMenu(); });
+
+    // ===== Admin =====""")
+
 # the page must not talk to anything but its own origin, and must not carry a dead feature
 for banned in ("fonts.googleapis", "openrouter", "knowledge", "kbModal", "customEditor", "customText", "addTag", "patientHistory", "monkAddon", "patterns["):
     assert banned not in s, f"leftover reference: {banned}"
