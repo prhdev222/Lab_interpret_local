@@ -9,3 +9,5 @@ __pycache__/
 *.pyc
 .DS_Store
 data/learning_log.json*
+ml_tagger/real_eval/real_eval_out/
+ml_tagger/**/tagger.pt
