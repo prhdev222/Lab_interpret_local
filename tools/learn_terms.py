@@ -213,6 +213,34 @@ def problem_suggestions(rows: list[dict], lex, prof: dict, min_count: int) -> li
     return out
 
 
+TAUGHT_TERM = re.compile(r"[A-Za-zก-๙][A-Za-z0-9ก-๙.\- ]{0,23}")
+
+
+def valid_taught_term(term) -> bool:
+    return isinstance(term, str) and bool(TAUGHT_TERM.fullmatch(term)) and term == term.strip() and "  " not in term
+
+
+def taught_suggestions(rows: list[dict], lex, min_count: int) -> list[dict]:
+    """A doctor pressed 'use FBS instead of sugar' (and then 'remember') in the page: {"k":"taught","t":name,"p":parameter}.
+    That is a human decision, so fewer repeats are needed than for statistical guesses (at most 2); an admin still approves each one."""
+    by_term: dict[str, Counter] = defaultdict(Counter)
+    for r in rows:
+        if r.get("k") == "taught" and valid_taught_term(r.get("t")) and r.get("p") in lex.params:
+            by_term[r["t"].lower()][r["p"]] += 1
+    out = []
+    for term, c in by_term.items():
+        total = sum(c.values())
+        if total < min(min_count, 2):
+            continue
+        (target, n), rest = c.most_common(1)[0], c.most_common()[1:]
+        share = n / total
+        out.append({"kind": "param_alias", "term": term, "target": target, "score": round(share, 2), "notes": total,
+                    "confidence": "high" if share >= 0.8 and n >= 2 else "low",
+                    "alternatives": [{"target": t, "score": round(k / total, 2)} for t, k in rest[:2]],
+                    "evidence": f"หมอกดยืนยันว่าเป็น {target} {n} จาก {total} ครั้ง" + ("" if not rest else " (มีบางครั้งที่เลือกเป็นอย่างอื่น ตรวจให้ดี)")})
+    return out
+
+
 def _known_terms(lex) -> set[str]:
     return ({re.sub(r"\s+", "", a.lower()) for a in lex.param_alias} | {re.sub(r"\s+", "", a.lower()) for a in lex.problem_alias}
             | {re.sub(r"\s+", "", ph.lower()) for spec in lex.concepts.values() for ph in spec["phrases"]})
@@ -244,6 +272,8 @@ def learn_rows(rows: list[dict], min_count: int = 3) -> list[dict]:
         sugg.append({"kind": "param_alias", "term": w, "target": top[1], "score": round(top[0], 2), "notes": c["notes"],
                      "confidence": "high" if top[0] >= 0.7 and margin >= 0.12 else "low",
                      "alternatives": [{"target": t, "score": round(s, 2)} for s, t, _ in scored[1:3]], "evidence": top[2]})
+    taught = taught_suggestions(rows, lex, min_count)
+    sugg = [x for x in sugg if x["term"] not in {t["term"] for t in taught}] + taught          # a doctor's explicit answer beats a statistical guess
     sugg += concept_suggestions(rows, lex, min_count, {x["term"] for x in sugg}) + problem_suggestions(rows, lex, prof, min_count)
     for i, s in enumerate(sugg, 1):
         s["id"] = f"s-{i}"; s["approve"] = False

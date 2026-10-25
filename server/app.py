@@ -201,6 +201,7 @@ def make_handler(db: DB, quiet: bool = True, use_tagger: bool = False):
 
         @staticmethod
         def _describe_row(r):
+            if r["k"] == "taught": return f"คำที่หมอยืนยัน '{r['t']}' = {r['p']}"
             if r["k"] == "known": return f"ค่าที่รู้จัก {r['p']} = {r['v']:g} (บรรทัด {r['g']})"
             if r["k"] == "unk": return f"คำย่อที่ไม่รู้จัก '{r['t']}' = {r['v']:g} (บรรทัด {r['g']}; ในบรรทัดมี {', '.join(r['with']) or '-'})"
             if r["k"] == "word": return f"คำที่สะกดใกล้อาการที่รู้จัก '{r['t']}'"
@@ -213,10 +214,16 @@ def make_handler(db: DB, quiet: bool = True, use_tagger: bool = False):
             action = d.get("action")
             if action == "status":
                 return self.js({"enabled": learning_log.status()["enabled"]})
-            if action not in ("preview", "save"):
+            if action not in ("preview", "save", "taught"):
                 return self.err(400, "action ไม่ถูกต้อง")
             if not learning_log.status()["enabled"]:
                 return self.err(403, "ยังไม่ได้เปิดการเก็บตัวอย่าง (admin เปิดได้ที่ปุ่ม 🧠)")
+            if action == "taught":                                              # the doctor accepted "use FBS instead of <name>" and asked to remember it
+                from tools.learn_terms import valid_taught_term
+                term, param = d.get("term"), d.get("param")
+                if not valid_taught_term(term) or param not in tagger.STANDARD_NAME:
+                    return self.err(400, "ข้อมูลไม่ถูกต้อง")
+                return self.js({"success": True, "stored": learning_log.add_rows([{"k": "taught", "t": term.lower(), "p": param}])})
             note = d.get("note", "")
             if not isinstance(note, str) or not note.strip() or len(note) > MAX_CHARS:
                 return self.err(400, "กรุณาใส่บันทึก")

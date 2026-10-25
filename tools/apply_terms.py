@@ -62,9 +62,12 @@ def apply(data: dict, suggestions: list[dict]) -> tuple[dict, list[str], list[st
         if clash:
             refused.append(f"{term}: ใช้แล้วในพจนานุกรม ({clash})"); continue
         if kind == "param_alias":
-            if target not in new["params"] or not re.fullmatch(r"[A-Za-z][A-Za-z0-9]{0,11}", term):
+            if target not in new["params"] or not re.fullmatch(r"[A-Za-zก-๙][A-Za-z0-9ก-๙.\- ]{0,23}", term) or "  " in term:
                 refused.append(f"{term}: ชื่อค่าไม่ถูกต้องหรือไม่รู้จัก '{target}'"); continue
             new["params"][target]["aliases"].append(term.lower())
+            if not _alias_is_read(new, target, term.lower()):          # a name the parser cannot actually match must not enter the dictionary
+                new["params"][target]["aliases"].pop()
+                refused.append(f"{term}: ระบบอ่านชื่อนี้ไม่ได้ (อักขระพิเศษหรือรูปแบบที่ parser จับไม่ได้) จึงไม่เพิ่ม"); continue
         elif kind == "concept_phrase":
             if target not in new["concepts"] or not 2 <= len(term) <= 30 or re.search(r"\d", term):
                 refused.append(f"{term}: วลีไม่ถูกต้องหรือไม่รู้จัก '{target}'"); continue
@@ -75,6 +78,23 @@ def apply(data: dict, suggestions: list[dict]) -> tuple[dict, list[str], list[st
             new["problems"][target].append(term.lower())
         done.append(f"{term} → {target}")
     return new, done, refused
+
+
+def _alias_is_read(data: dict, target: str, alias: str) -> bool:
+    """After adding `alias` to `target`, does a note like 'DM : <alias> <plausible value>' really give that parameter?"""
+    spec = data["params"][target]
+    if spec.get("kind") == "bp":
+        val = "130/80"
+    elif spec.get("range"):
+        lo, hi = spec["range"]
+        val = f"{(lo * hi) ** 0.5:.0f}"
+    else:
+        return True
+    try:
+        got = collect_params(parse_note(f"DM : {alias} {val}", lexicon=Lexicon(data)))
+    except Exception:
+        return False
+    return target in got and not got[target]["invalid"]
 
 
 def reading(text: str, lex: Lexicon | None) -> dict:

@@ -150,7 +150,7 @@ cut("    // ===== Generate (via Backend Proxy) =====", "    // ===== Review Work
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'เกิดข้อผิดพลาด');
-        renderRead(data); learnInit(!!data.learning); suggestInit(!!data.tagger, note);
+        renderRead(data); learnInit(!!data.learning); suggestInit(!!data.tagger, note, !!data.learning);
         document.getElementById('editArea').value = data.result;
         document.getElementById('loading').classList.remove('show');
         document.getElementById('reviewStep').style.display = 'block';

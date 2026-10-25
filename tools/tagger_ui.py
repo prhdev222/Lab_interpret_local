@@ -1,6 +1,7 @@
 """Page pieces for the optional number tagger (server started with --tagger). Kept apart like rules_editor_ui.py."""
 
-BOX = r'''            <div id="suggestBox" class="no-print" style="display:none;margin:10px 0;border:1.5px solid #F0B35A;background:#FFFBEB;border-radius:10px;padding:8px 12px;font-size:12.5px;line-height:1.8;"></div>
+BOX = r'''            <div id="taughtBox" class="no-print" style="display:none;margin:10px 0;border:1.5px dashed var(--border);border-radius:10px;padding:8px 12px;font-size:12.5px;"></div>
+            <div id="suggestBox" class="no-print" style="display:none;margin:10px 0;border:1.5px solid #F0B35A;background:#FFFBEB;border-radius:10px;padding:8px 12px;font-size:12.5px;line-height:1.8;"></div>
 '''
 
 TOGGLE = r'''
@@ -24,11 +25,27 @@ JS = r'''
       suggestItems = []; box.style.display = 'none'; box.innerHTML = '';
       if (suggestOn() && suggestNote) suggestLoad(suggestNote);
     }
-    function suggestInit(enabled, note) {
+    let taughtPending = null;
+    function suggestInit(enabled, note, learning) {
       suggestNote = note; suggestItems = [];
       const box = document.getElementById('suggestBox');
       box.style.display = 'none'; box.innerHTML = '';
+      taughtShow(!!learning);
       if (enabled && suggestOn()) suggestLoad(note);
+    }
+    function taughtShow(learning) {
+      const b = document.getElementById('taughtBox');
+      if (!taughtPending || !learning) { b.style.display = 'none'; b.innerHTML = ''; taughtPending = null; return; }
+      const t = taughtPending;
+      b.style.display = 'block';
+      b.innerHTML = `🧠 จำคำว่า <b>“${esc(t.name)}”</b> = <b>${esc(t.alias)}</b> ไว้ถาวรไหม? <span style="color:var(--text-light)">จะเก็บเฉพาะคำนี้กับชื่อพารามิเตอร์ (ไม่เก็บบันทึก ค่า อายุ เพศ) และต้องให้ผู้ดูแลอนุมัติก่อนระบบกฎจะใช้</span><br><button class="save" onclick="taughtSave()">จำไว้</button> <button class="cancel" onclick="taughtSkip()">ไม่ต้อง</button>`;
+    }
+    function taughtSkip() { taughtPending = null; taughtShow(false); }
+    async function taughtSave() {
+      const t = taughtPending; taughtPending = null;
+      const d = await learnCall('/api/learn', { action: 'taught', term: t.name, param: t.param });
+      const b = document.getElementById('taughtBox');
+      b.innerHTML = d.error ? '<span style="color:#B91C1C">' + esc(d.error) + '</span>' : (d.stored ? '✅ เก็บคำนี้แล้ว รอผู้ดูแลอนุมัติที่ ⚙️ ตั้งค่า → 🧠 เรียนรู้ตัวย่อ' : 'ยังไม่ได้เก็บ (ปิดการเก็บตัวอย่างอยู่)');
     }
     async function suggestLoad(note) {
       const d = await learnCall('/api/suggest', { action: 'suggest', note });
@@ -57,6 +74,7 @@ JS = r'''
       const lead = ta.value.length - ta.value.trimStart().length;
       if (!it || ta.value.trim() !== suggestNote || ta.value.substr(lead + it.ns, it.ne - it.ns) !== it.name) { alert('บันทึกถูกแก้ไปแล้ว กรุณากด "แปลผล" ใหม่ก่อน'); return; }
       await learnCall('/api/suggest', { action: 'feedback', param: it.param, accepted: true, conf: it.conf });
+      taughtPending = { name: it.name, param: it.param, alias: it.alias };
       ta.value = ta.value.slice(0, lead + it.ns) + it.alias + ta.value.slice(lead + it.ne);
       generate();
     }

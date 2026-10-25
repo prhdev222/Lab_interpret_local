@@ -129,3 +129,83 @@ class Disabled(ServerCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TeachTheRules(unittest.TestCase):
+    """Route 1: a doctor's accepted suggestion becomes a dictionary word (after an admin approves), so the RULES read it next time."""
+
+    def rows(self, term, param, n):
+        return [{"k": "taught", "t": term, "p": param} for _ in range(n)]
+
+    def test_two_confirmations_make_a_suggestion_and_one_does_not(self):
+        from tools.learn_terms import learn_rows
+        self.assertEqual([s for s in learn_rows(self.rows("sugar", "FBS", 1)) if s["term"] == "sugar"], [])
+        s = [s for s in learn_rows(self.rows("sugar", "FBS", 2)) if s["term"] == "sugar"]
+        self.assertEqual((s[0]["kind"], s[0]["target"], s[0]["notes"], s[0]["confidence"]), ("param_alias", "FBS", 2, "high"))
+
+    def test_conflicting_answers_are_low_confidence_and_listed(self):
+        from tools.learn_terms import learn_rows
+        s = [s for s in learn_rows(self.rows("zz", "FBS", 2) + self.rows("zz", "eGFR", 2)) if s["term"] == "zz"][0]
+        self.assertEqual(s["confidence"], "low")
+        self.assertTrue(s["alternatives"])
+
+    def test_bad_rows_are_ignored(self):
+        from tools.learn_terms import learn_rows
+        bad = self.rows("x;drop table", "FBS", 3) + self.rows("sugar", "NOTAPARAM", 3) + self.rows("a" * 40, "FBS", 3)
+        self.assertEqual([s for s in learn_rows(bad) if s["kind"] == "param_alias"], [])
+
+    def test_end_to_end_into_a_temp_dictionary(self):
+        import json, shutil
+        from engine.lexicon import Lexicon
+        from engine.parse_note import collect_params, parse_note
+        from tools.apply_terms import apply_and_write
+        from tools.learn_terms import learn_rows
+        lex_path = os.path.join(tempfile.mkdtemp(), "lexicon.json")
+        shutil.copy(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "lexicon.json"), lex_path)
+        rows = self.rows("sugar", "FBS", 2) + self.rows("glycated Hb", "HbA1c", 2) + self.rows("น้ำตาลสะสม", "HbA1c", 2)
+        chosen = [s for s in learn_rows(rows) if s["kind"] == "param_alias"]
+        self.assertEqual(sorted(s["term"] for s in chosen), ["glycated hb", "sugar", "น้ำตาลสะสม"])
+        r = apply_and_write(chosen, path=lex_path)
+        self.assertTrue(r["success"], r)
+        lex = Lexicon(json.load(open(lex_path, encoding="utf-8")))
+        got = collect_params(parse_note("DM : sugar 120->130 glycated Hb 9.4", lexicon=lex))
+        self.assertEqual((got["FBS"]["series"], got["HbA1c"]["series"]), ([120.0, 130.0], [9.4]))
+        self.assertEqual(collect_params(parse_note("DM : น้ำตาลสะสม 8.2", lexicon=lex))["HbA1c"]["series"], [8.2])
+
+    def test_unreadable_or_malformed_names_are_refused_and_never_added(self):
+        import json
+        from unittest import mock
+        from tools import apply_terms
+        data = json.load(open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "lexicon.json"), encoding="utf-8"))
+        new, done, refused = apply_terms.apply(data, [{"approve": True, "kind": "param_alias", "term": "9sugar", "target": "FBS"}])
+        self.assertEqual((done, len(refused)), ([], 1))
+        with mock.patch.object(apply_terms, "_alias_is_read", return_value=False):
+            new, done, refused = apply_terms.apply(data, [{"approve": True, "kind": "param_alias", "term": "sugar", "target": "FBS"}])
+        self.assertEqual(done, [])
+        self.assertNotIn("sugar", new["params"]["FBS"]["aliases"])
+        self.assertTrue(apply_terms._alias_is_read(apply_terms.apply(data, [{"approve": True, "kind": "param_alias", "term": "sugar", "target": "FBS"}])[0], "FBS", "sugar"))
+
+
+class TaughtEndpoint(ServerCase):
+    def setUp(self):
+        from engine import learning_log
+        self.ll = learning_log
+        self.old = learning_log.PATH
+        learning_log.PATH = os.path.join(tempfile.mkdtemp(), "log.json")
+        self.addCleanup(lambda: setattr(learning_log, "PATH", self.old))
+        self.t = self.login()[1]["token"]
+
+    def test_refused_while_the_log_is_off(self):
+        self.assertEqual(self.call("/api/learn", {"action": "taught", "term": "sugar", "param": "FBS"}, self.t)[0], 403)
+
+    def test_stores_only_term_and_parameter(self):
+        self.call("/api/admin/learning", {"action": "set", "enabled": True}, self.t)
+        code, d, _ = self.call("/api/learn", {"action": "taught", "term": "Sugar", "param": "FBS", "note": "SECRET NOTE"}, self.t)
+        self.assertEqual((code, d["stored"]), (200, 1))
+        self.assertEqual(self.ll.export()["rows"], [{"k": "taught", "t": "sugar", "p": "FBS"}])
+
+    def test_bad_input_is_rejected(self):
+        self.call("/api/admin/learning", {"action": "set", "enabled": True}, self.t)
+        for bad in ({"term": "x;y", "param": "FBS"}, {"term": "sugar", "param": "LDL"}, {"term": "", "param": "FBS"}, {"term": 5, "param": "FBS"}, {"term": "a" * 40, "param": "FBS"}):
+            self.assertEqual(self.call("/api/learn", dict(bad, action="taught"), self.t)[0], 400, bad)
+        self.assertEqual(self.ll.export()["rows"], [])
