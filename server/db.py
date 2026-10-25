@@ -36,6 +36,8 @@ class DB:
               fails INTEGER NOT NULL DEFAULT 0, locked_until REAL NOT NULL DEFAULT 0, created_at TEXT DEFAULT (datetime('now')));
             CREATE TABLE IF NOT EXISTS sessions (
               token_hash TEXT PRIMARY KEY, user_id INTEGER NOT NULL, expires_at REAL NOT NULL);
+            CREATE TABLE IF NOT EXISTS tagger_feedback (
+              id INTEGER PRIMARY KEY AUTOINCREMENT, param TEXT NOT NULL, accepted INTEGER NOT NULL, conf_band TEXT NOT NULL, created_at TEXT DEFAULT (datetime('now')));
             CREATE TABLE IF NOT EXISTS usage_log (
               id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, pattern TEXT, monk_mode INTEGER, created_at TEXT DEFAULT (datetime('now')));
         """)
@@ -122,6 +124,21 @@ class DB:
             self.con.execute("INSERT INTO usage_log (user_id, pattern, monk_mode) VALUES (?,?,?)", (user_id, pattern, int(monk)))
             self.con.execute("DELETE FROM usage_log WHERE created_at < datetime('now','-30 days')")
 
+    # ---- doctor's answer to a tagger suggestion: parameter + yes/no + confidence band only (never the note, the name or the values)
+    @staticmethod
+    def _band(conf: float) -> str:
+        return ">=0.95" if conf >= 0.95 else "0.8-0.95" if conf >= 0.8 else "<0.8"
+
+    def log_tagger(self, param: str, accepted: bool, conf: float) -> None:
+        with self.lock:
+            self.con.execute("INSERT INTO tagger_feedback (param, accepted, conf_band) VALUES (?,?,?)", (param, int(accepted), self._band(conf)))
+
+    def tagger_stats(self) -> dict:
+        q = self.con.execute
+        rows = [dict(r) for r in q("SELECT conf_band AS band, SUM(accepted) AS accepted, COUNT(*) - SUM(accepted) AS rejected FROM tagger_feedback GROUP BY conf_band ORDER BY band")]
+        per = [dict(r) for r in q("SELECT param, SUM(accepted) AS accepted, COUNT(*) - SUM(accepted) AS rejected FROM tagger_feedback GROUP BY param ORDER BY param")]
+        return {"byBand": rows, "byParam": per, "total": q("SELECT COUNT(*) FROM tagger_feedback").fetchone()[0]}
+
     def clear_logs(self) -> None:
         with self.lock:
             self.con.execute("DELETE FROM usage_log")
@@ -134,4 +151,5 @@ class DB:
             "perPattern": [dict(r) for r in q("SELECT pattern, COUNT(*) AS count FROM usage_log WHERE created_at >= datetime('now','-30 days') GROUP BY pattern ORDER BY count DESC")],
             "activeSessions": q("SELECT COUNT(*) FROM sessions WHERE expires_at >= ?", (time.time(),)).fetchone()[0],
             "totalLogs": q("SELECT COUNT(*) FROM usage_log").fetchone()[0],
+            "tagger": self.tagger_stats(),
         }

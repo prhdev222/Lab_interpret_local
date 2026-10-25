@@ -21,7 +21,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from engine.lexicon import load_lexicon
 from engine.parse_note import MAX_CHARS, collect_params, parse_note
-from engine import learning_log
+from engine import learning_log, tagger
 from engine.render import render_clinician, render_patient
 from engine.rules import evaluate
 
@@ -37,7 +37,7 @@ SEC_HEADERS = {
 }
 
 
-def make_handler(db: DB, quiet: bool = True):
+def make_handler(db: DB, quiet: bool = True, use_tagger: bool = False):
     class Handler(BaseHTTPRequestHandler):
         server_version = "LabInterpreter"
         sys_version = ""
@@ -121,7 +121,7 @@ def make_handler(db: DB, quiet: bool = True):
         def _post(self):
             path = self.path.split("?")[0]
             routes = {"/api/login": self.login, "/api/logout": self.logout, "/api/me": self.me, "/api/generate": self.generate,
-                      "/api/admin/users": self.admin_users, "/api/admin/stats": self.admin_stats, "/api/admin/rules": self.admin_rules, "/api/admin/targets": self.admin_targets, "/api/admin/golden": self.admin_golden, "/api/learn": self.learn_example, "/api/admin/learning": self.admin_learning}
+                      "/api/admin/users": self.admin_users, "/api/admin/stats": self.admin_stats, "/api/admin/rules": self.admin_rules, "/api/admin/targets": self.admin_targets, "/api/admin/golden": self.admin_golden, "/api/learn": self.learn_example, "/api/suggest": self.suggest, "/api/admin/learning": self.admin_learning}
             fn = routes.get(path)
             if fn is None:
                 return self.err(404, "ไม่พบ API นี้")
@@ -171,7 +171,31 @@ def make_handler(db: DB, quiet: bool = True):
             db.log_use(u["id"], pattern, monk)                                  # counters only; no note content
             self.js({"result": render_patient(result, pattern, monk), "clinician": render_clinician(result), "table": table, "visits": visits,
                      "unparsed_lines": parsed["unparsed_lines"], "warnings": result["warnings"], "status": result["targets_status"],
-                     "interpreted": len(result["findings"]), "params_read": len(params), "learning": learning_log.status()["enabled"]})
+                     "interpreted": len(result["findings"]), "params_read": len(params), "learning": learning_log.status()["enabled"], "tagger": use_tagger})
+
+        def suggest(self, d):
+            """Optional ML helper (--tagger). 'suggest' = guesses for numbers the rules could not place; 'feedback' = the doctor's yes/no, stored as counters only."""
+            u = self.user()
+            if not u:
+                return self.err(401, "กรุณา login ก่อน")
+            if not use_tagger:
+                return self.js({"available": False, "items": []})
+            if d.get("action") == "feedback":
+                param = d.get("param")
+                if param not in tagger.STANDARD_NAME or not isinstance(d.get("accepted"), bool):
+                    return self.err(400, "ข้อมูลไม่ถูกต้อง")
+                try:
+                    conf = float(d.get("conf", 0))
+                except (TypeError, ValueError):
+                    return self.err(400, "ข้อมูลไม่ถูกต้อง")
+                db.log_tagger(param, d["accepted"], conf)
+                return self.js({"success": True})
+            note = d.get("note", "")
+            if not isinstance(note, str) or not note.strip() or len(note) > MAX_CHARS:
+                return self.err(400, "กรุณาใส่บันทึก")
+            if not tagger.available():
+                return self.js({"available": False, "items": []})
+            self.js({"available": True, "items": tagger.suggest(note)})
 
         @staticmethod
         def _describe_row(r):
@@ -401,13 +425,13 @@ def make_handler(db: DB, quiet: bool = True):
     return Handler
 
 
-def serve(host: str, port: int, db_path: str, quiet: bool = True) -> tuple[ThreadingHTTPServer, DB]:
+def serve(host: str, port: int, db_path: str, quiet: bool = True, use_tagger: bool = False) -> tuple[ThreadingHTTPServer, DB]:
     db = DB(db_path)
     if db.user_count() == 0:
         pin = "".join(secrets.choice("0123456789") for _ in range(8))
         db.add_user("admin", pin, "ผู้ดูแลระบบ", "doctor", is_admin=True)
         print(f"\n  สร้างบัญชีผู้ดูแลครั้งแรก:  ชื่อผู้ใช้ admin   PIN {pin}\n  (แสดงครั้งเดียวเท่านั้น จดไว้แล้วเปลี่ยนในหน้า 'จัดการผู้ใช้' หรือใช้ python3 manage.py reset-pin admin)\n", flush=True)
-    httpd = ThreadingHTTPServer((host, port), make_handler(db, quiet))
+    httpd = ThreadingHTTPServer((host, port), make_handler(db, quiet, use_tagger))
     return httpd, db
 
 
@@ -416,9 +440,12 @@ def main():
     ap.add_argument("--host", default="127.0.0.1", help="default 127.0.0.1 = this machine only")
     ap.add_argument("--port", type=int, default=8741)
     ap.add_argument("--db", default=os.path.join(ROOT, "data", "app.db"))
+    ap.add_argument("--tagger", action="store_true", help="ทดลอง: ให้โมเดลเล็กเสนอว่าตัวเลขที่ระบบอ่านไม่ออกคือพารามิเตอร์อะไร (ต้อง pip install onnxruntime numpy; หมอต้องกดยืนยันทุกข้อ)")
     ap.add_argument("--verbose", action="store_true", help="log method/path/status (never bodies)")
     a = ap.parse_args()
-    httpd, _ = serve(a.host, a.port, a.db, quiet=not a.verbose)
+    httpd, _ = serve(a.host, a.port, a.db, quiet=not a.verbose, use_tagger=a.tagger)
+    if a.tagger and not tagger.available():
+        print("  --tagger: ใช้ไม่ได้ (ไม่พบ onnxruntime/numpy หรือไฟล์โมเดลใน ml_tagger/real_eval/) ระบบจะทำงานตามปกติโดยไม่มีตัวช่วยนี้", flush=True)
     print(f"Lab Interpreter: http://{a.host}:{a.port}/   (Ctrl+C เพื่อหยุด)", flush=True)
     if a.host not in ("127.0.0.1", "localhost", "::1"):
         print("  คำเตือน: เปิดให้เครื่องอื่นในเครือข่ายเข้าถึงได้ ควรใช้ HTTPS และให้ IT ตรวจสอบก่อน", flush=True)

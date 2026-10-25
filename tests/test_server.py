@@ -228,7 +228,7 @@ class Admin(ServerCase):
 
     def test_stats_shape(self):
         d = self.call("/api/admin/stats", {}, token=self.token)[1]
-        self.assertEqual(set(d), {"daily", "perUser", "perPattern", "activeSessions", "totalLogs"})
+        self.assertEqual(set(d), {"daily", "perUser", "perPattern", "activeSessions", "totalLogs", "tagger"})
 
 
 class LearningLog(ServerCase):

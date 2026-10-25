@@ -7,6 +7,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import rules_editor_ui  # noqa: E402
+import tagger_ui  # noqa: E402
 
 SRC, DST = "upstream/public/index.html", "public/index.html"
 s = open(SRC, encoding="utf-8").read()
@@ -53,7 +54,7 @@ cut("    function addTag(t) {", "    // ===== Generate (via Backend Proxy) =====
 sub("  <!-- ===== ADMIN MODAL ===== -->", rules_editor_ui.MODAL + rules_editor_ui.TARGETS_MODAL + rules_editor_ui.GOLDEN_MODAL + rules_editor_ui.LEARN_MODAL + "  <!-- ===== ADMIN MODAL ===== -->")
 sub('      <button class="hdr-btn" onclick="showAdminModal()" id="adminBtn" style="display:none">👥 จัดการผู้ใช้</button>',
     '      <button class="hdr-btn" onclick="showLearnModal()" id="learnBtn" style="display:none">🧠 เรียนรู้</button>\n      <button class="hdr-btn" onclick="showGoldenModal()" id="goldenBtn" style="display:none">✅ ตัวอย่าง</button>\n      <button class="hdr-btn" onclick="showTargetsModal()" id="targetsBtn" style="display:none">🎯 เกณฑ์</button>\n      <button class="hdr-btn" onclick="showRulesModal()" id="rulesBtn" style="display:none">📐 กฎ</button>\n      <button class="hdr-btn" onclick="showAdminModal()" id="adminBtn" style="display:none">👥 จัดการผู้ใช้</button>')
-sub("    // ===== Admin =====", rules_editor_ui.JS + rules_editor_ui.TARGETS_JS + rules_editor_ui.GOLDEN_JS + rules_editor_ui.LEARN_JS + "    // ===== Admin =====")
+sub("    // ===== Admin =====", rules_editor_ui.JS + rules_editor_ui.TARGETS_JS + rules_editor_ui.GOLDEN_JS + rules_editor_ui.LEARN_JS + tagger_ui.JS + "    // ===== Admin =====")
 sub("document.getElementById('adminBtn').style.display = 'inline-flex';", "document.getElementById('adminBtn').style.display = 'inline-flex'; document.getElementById('rulesBtn').style.display = 'inline-flex'; document.getElementById('targetsBtn').style.display = 'inline-flex'; document.getElementById('goldenBtn').style.display = 'inline-flex'; document.getElementById('learnBtn').style.display = 'inline-flex';")
 sub("document.getElementById('adminBtn').style.display = 'none';", "document.getElementById('adminBtn').style.display = 'none'; document.getElementById('rulesBtn').style.display = 'none'; document.getElementById('targetsBtn').style.display = 'none'; document.getElementById('goldenBtn').style.display = 'none'; document.getElementById('learnBtn').style.display = 'none';")
 
@@ -88,7 +89,7 @@ sub('กำลังวิเคราะห์...<br><span\n                sty
 
 # ---- 5. review step: show what the system READ (the safety check) + doctor-only hints, above the editable draft
 sub('''            <textarea class="edit-area" id="editArea" spellcheck="false"></textarea>''', '''            <div id="draftWarn" class="no-print" style="display:none;background:#FFF4E5;border:1.5px solid #F0B35A;border-radius:10px;padding:10px 12px;margin:10px 0;font-size:12.5px;line-height:1.6;"></div>
-''' + rules_editor_ui.LEARN_BOX + '''            <details id="readBox" class="no-print" open style="margin:10px 0;border:1.5px solid var(--border);border-radius:10px;padding:8px 12px;">
+''' + rules_editor_ui.LEARN_BOX + tagger_ui.BOX + '''            <details id="readBox" class="no-print" open style="margin:10px 0;border:1.5px solid var(--border);border-radius:10px;padding:8px 12px;">
               <summary style="cursor:pointer;font-weight:600;font-size:13px;">🔎 สิ่งที่ระบบอ่านได้จากบันทึก (ตรวจให้ตรงกับที่เขียนก่อนยืนยัน)</summary>
               <div id="readTable" style="margin-top:8px;font-size:12.5px;line-height:1.7;"></div>
             </details>
@@ -149,7 +150,7 @@ cut("    // ===== Generate (via Backend Proxy) =====", "    // ===== Review Work
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'เกิดข้อผิดพลาด');
-        renderRead(data); learnInit(!!data.learning);
+        renderRead(data); learnInit(!!data.learning); suggestInit(!!data.tagger, note);
         document.getElementById('editArea').value = data.result;
         document.getElementById('loading').classList.remove('show');
         document.getElementById('reviewStep').style.display = 'block';
@@ -213,6 +214,8 @@ sub("    // ===== Admin =====", """    // ===== Admin menu =====
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMenu(); });
 
     // ===== Admin =====""")
+
+sub("      document.getElementById('statsContent').innerHTML = html;", tagger_ui.STATS_JS)
 
 # the page must not talk to anything but its own origin, and must not carry a dead feature
 for banned in ("fonts.googleapis", "openrouter", "knowledge", "kbModal", "customEditor", "customText", "addTag", "patientHistory", "monkAddon", "patterns["):
