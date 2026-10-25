@@ -180,6 +180,8 @@ def make_handler(db: DB, quiet: bool = True, use_tagger: bool = False):
                 return self.err(401, "กรุณา login ก่อน")
             if not use_tagger:
                 return self.js({"available": False, "items": []})
+            if d.get("action") == "status":
+                return self.js({"available": tagger.available()})
             if d.get("action") == "feedback":
                 param = d.get("param")
                 if param not in tagger.STANDARD_NAME or not isinstance(d.get("accepted"), bool):

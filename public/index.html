@@ -1444,6 +1444,7 @@
             <textarea id="labValues" class="large" spellcheck="false"
               placeholder="DM : FBS 120->130->110 HbA1C 12->10->6.5%&#10;HT : BP 150/90mmHg HMBP 120/80mmHg&#10;Obesity : BW 110-->100Kg BMI 31&#10;CKD : Cr 1.5 GFR 54&#10;22/10/69 : มีเวียนศีรษะ ฉันได้น้อย ยังสูบบุหรี่อยู่"></textarea>
             <div style="font-size:11px;color:var(--text-light);margin-top:4px;">ค่าซ้ายสุด = เก่าสุด · ขวาสุด = ล่าสุด · ระบบไม่เดา ส่วนที่ไม่เข้าใจจะแสดงให้ตรวจสอบ</div>
+            <label id="tgRow" class="no-print" style="display:none;margin-top:6px;font-size:12.5px;cursor:pointer;"><input type="checkbox" id="tgToggle" onchange="suggestToggle()"> 💡 ตัวช่วยเดาด้วย ML (ทดลอง) <span style="color:var(--text-light)">— ปิด = ใช้ระบบกฎอย่างเดียว เปิด = กฎอ่านก่อน แล้ว ML เสนอเฉพาะตัวเลขที่กฎอ่านไม่ออก (ต้องกดยืนยัน)</span></label>
           </div>
           <button class="btn-primary" id="generateBtn" onclick="generate()">🔬 แปลผล Lab</button>
         </div>
@@ -1611,6 +1612,7 @@
     }
 
     function unlockUI() {
+      suggestStatus();
       document.getElementById('lockScreen').classList.add('hidden');
       document.getElementById('userInfo').textContent = `${currentUser.displayName} (${currentUser.role})`;
       // Auto-fill reviewer name
@@ -1967,11 +1969,26 @@
 
     // ===== Number tagger suggestions (optional, experimental; the doctor must press a button for each one) =====
     let suggestNote = '', suggestItems = [];
+    function suggestOn() { return document.getElementById('tgToggle').checked; }
+    async function suggestStatus() {
+      try {
+        const d = await learnCall('/api/suggest', { action: 'status' });
+        document.getElementById('tgRow').style.display = d.available ? 'block' : 'none';
+        let saved = false; try { saved = localStorage.getItem('lab_tagger') === '1'; } catch (e) { /* private window: stays off */ }
+        document.getElementById('tgToggle').checked = !!d.available && saved;
+      } catch (e) { document.getElementById('tgRow').style.display = 'none'; }
+    }
+    function suggestToggle() {
+      try { localStorage.setItem('lab_tagger', suggestOn() ? '1' : '0'); } catch (e) { /* not essential */ }
+      const box = document.getElementById('suggestBox');
+      suggestItems = []; box.style.display = 'none'; box.innerHTML = '';
+      if (suggestOn() && suggestNote) suggestLoad(suggestNote);
+    }
     function suggestInit(enabled, note) {
       suggestNote = note; suggestItems = [];
       const box = document.getElementById('suggestBox');
       box.style.display = 'none'; box.innerHTML = '';
-      if (enabled) suggestLoad(note);
+      if (enabled && suggestOn()) suggestLoad(note);
     }
     async function suggestLoad(note) {
       const d = await learnCall('/api/suggest', { action: 'suggest', note });

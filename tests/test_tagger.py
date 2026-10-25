@@ -91,6 +91,9 @@ class Endpoint(ServerCase):
         code, d, _ = self.call("/api/generate", {"note": "DM : FBS 120"}, self.token())
         self.assertEqual((code, d["tagger"]), (200, True))
 
+    def test_status_tells_the_page_whether_to_show_the_switch(self):
+        self.assertEqual(self.call("/api/suggest", {"action": "status"}, self.token())[1], {"available": HAVE_MODEL})
+
     def test_feedback_stores_only_counters_never_text(self):
         t = self.token()
         self.assertEqual(self.call("/api/suggest", {"action": "feedback", "param": "FBS", "accepted": True, "conf": 0.97, "note": "SECRETNOTE-123", "name": "SECRETNAME"}, t)[0], 200)
@@ -121,6 +124,7 @@ class Disabled(ServerCase):
         code, d, _ = self.call("/api/generate", {"note": "DM : FBS 120"}, t)
         self.assertFalse(d["tagger"])
         self.assertEqual(self.call("/api/suggest", {"action": "suggest", "note": "DM : sugar 120"}, t)[1], {"available": False, "items": []})
+        self.assertEqual(self.call("/api/suggest", {"action": "status"}, t)[1], {"available": False, "items": []})
 
 
 if __name__ == "__main__":

@@ -3,14 +3,32 @@
 BOX = r'''            <div id="suggestBox" class="no-print" style="display:none;margin:10px 0;border:1.5px solid #F0B35A;background:#FFFBEB;border-radius:10px;padding:8px 12px;font-size:12.5px;line-height:1.8;"></div>
 '''
 
+TOGGLE = r'''
+            <label id="tgRow" class="no-print" style="display:none;margin-top:6px;font-size:12.5px;cursor:pointer;"><input type="checkbox" id="tgToggle" onchange="suggestToggle()"> 💡 ตัวช่วยเดาด้วย ML (ทดลอง) <span style="color:var(--text-light)">— ปิด = ใช้ระบบกฎอย่างเดียว เปิด = กฎอ่านก่อน แล้ว ML เสนอเฉพาะตัวเลขที่กฎอ่านไม่ออก (ต้องกดยืนยัน)</span></label>'''
+
 JS = r'''
     // ===== Number tagger suggestions (optional, experimental; the doctor must press a button for each one) =====
     let suggestNote = '', suggestItems = [];
+    function suggestOn() { return document.getElementById('tgToggle').checked; }
+    async function suggestStatus() {
+      try {
+        const d = await learnCall('/api/suggest', { action: 'status' });
+        document.getElementById('tgRow').style.display = d.available ? 'block' : 'none';
+        let saved = false; try { saved = localStorage.getItem('lab_tagger') === '1'; } catch (e) { /* private window: stays off */ }
+        document.getElementById('tgToggle').checked = !!d.available && saved;
+      } catch (e) { document.getElementById('tgRow').style.display = 'none'; }
+    }
+    function suggestToggle() {
+      try { localStorage.setItem('lab_tagger', suggestOn() ? '1' : '0'); } catch (e) { /* not essential */ }
+      const box = document.getElementById('suggestBox');
+      suggestItems = []; box.style.display = 'none'; box.innerHTML = '';
+      if (suggestOn() && suggestNote) suggestLoad(suggestNote);
+    }
     function suggestInit(enabled, note) {
       suggestNote = note; suggestItems = [];
       const box = document.getElementById('suggestBox');
       box.style.display = 'none'; box.innerHTML = '';
-      if (enabled) suggestLoad(note);
+      if (enabled && suggestOn()) suggestLoad(note);
     }
     async function suggestLoad(note) {
       const d = await learnCall('/api/suggest', { action: 'suggest', note });

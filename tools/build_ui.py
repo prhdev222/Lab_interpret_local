@@ -216,6 +216,8 @@ sub("    // ===== Admin =====", """    // ===== Admin menu =====
     // ===== Admin =====""")
 
 sub("      document.getElementById('statsContent').innerHTML = html;", tagger_ui.STATS_JS)
+sub("ส่วนที่ไม่เข้าใจจะแสดงให้ตรวจสอบ</div>\n", "ส่วนที่ไม่เข้าใจจะแสดงให้ตรวจสอบ</div>" + tagger_ui.TOGGLE + "\n")
+sub("    function unlockUI() {\n", "    function unlockUI() {\n      suggestStatus();\n")
 
 # the page must not talk to anything but its own origin, and must not carry a dead feature
 for banned in ("fonts.googleapis", "openrouter", "knowledge", "kbModal", "customEditor", "customText", "addTag", "patientHistory", "monkAddon", "patterns["):
